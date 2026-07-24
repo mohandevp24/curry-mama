@@ -22,13 +22,13 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
 # Check if psycopg2 is installed and postgres credentials exist
 USE_POSTGRES = False
 psycopg2 = None
-try:
-    if DATABASE_URL or DB_HOST:
+if DATABASE_URL or (DB_HOST and DB_HOST != "localhost"):
+    try:
         import psycopg2
         from psycopg2.extras import RealDictCursor
         USE_POSTGRES = True
-except Exception:
-    USE_POSTGRES = False
+    except Exception:
+        USE_POSTGRES = False
 
 class PostgresConnectionWrapper:
     def __init__(self, conn):
@@ -47,7 +47,6 @@ class SqliteDictCursor:
         self._cursor = cursor
 
     def execute(self, sql, params=()):
-        # Convert Postgres %s placeholder to SQLite ? placeholder if needed
         sql_converted = sql.replace("%s", "?").replace("SERIAL PRIMARY KEY", "INTEGER PRIMARY KEY AUTOINCREMENT")
         sql_converted = sql_converted.replace("BOOLEAN", "INTEGER").replace("TRUE", "1").replace("FALSE", "0")
         return self._cursor.execute(sql_converted, params)
@@ -83,7 +82,7 @@ class SqliteConnectionWrapper:
         self._conn.close()
 
 def get_db():
-    if USE_POSTGRES and psycopg2 is not None:
+    if USE_POSTGRES:
         try:
             if DATABASE_URL:
                 conn = psycopg2.connect(DATABASE_URL)
@@ -94,7 +93,7 @@ def get_db():
                     database=DB_NAME,
                     user=DB_USER,
                     password=DB_PASSWORD,
-                    connect_timeout=3
+                    connect_timeout=5
                 )
             return PostgresConnectionWrapper(conn)
         except Exception as e:
@@ -110,10 +109,13 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
     
+    pk_type = "SERIAL PRIMARY KEY" if USE_POSTGRES else "INTEGER PRIMARY KEY AUTOINCREMENT"
+    placeholder = "%s" if USE_POSTGRES else "?"
+
     # Create products table
-    cursor.execute("""
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {pk_type},
             name TEXT NOT NULL,
             category TEXT NOT NULL,
             price REAL NOT NULL,
@@ -124,9 +126,9 @@ def init_db():
     """)
     
     # Create orders table
-    cursor.execute("""
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {pk_type},
             customer_name TEXT NOT NULL,
             mobile_number TEXT NOT NULL DEFAULT '',
             address TEXT NOT NULL DEFAULT '',
@@ -141,9 +143,9 @@ def init_db():
     """)
     
     # Create shops table
-    cursor.execute("""
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS shops (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {pk_type},
             name TEXT NOT NULL,
             owner_name TEXT NOT NULL,
             workers TEXT NOT NULL,
@@ -154,9 +156,9 @@ def init_db():
     """)
 
     # Create delivery_partners table
-    cursor.execute("""
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS delivery_partners (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {pk_type},
             name TEXT NOT NULL,
             mobile_number TEXT NOT NULL,
             location TEXT NOT NULL
@@ -164,9 +166,9 @@ def init_db():
     """)
 
     # Create banners table
-    cursor.execute("""
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS banners (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {pk_type},
             image_url TEXT NOT NULL,
             title TEXT NOT NULL DEFAULT '',
             is_active INTEGER NOT NULL DEFAULT 1,
@@ -177,17 +179,21 @@ def init_db():
     conn.commit()
     
     # Check if seed needed
-    cursor.execute("SELECT COUNT(*) as count FROM products")
-    row = cursor.fetchone()
-    count = row['count'] if row else 0
+    try:
+        cursor.execute("SELECT COUNT(*) as count FROM products")
+        row = cursor.fetchone()
+        count = row['count'] if row else 0
+    except Exception:
+        count = 0
+
     if count == 0:
         print("Seeding database...")
-        seed_data(conn)
+        seed_data(conn, placeholder)
         
     cursor.close()
     conn.close()
 
-def seed_data(conn):
+def seed_data(conn, placeholder="%s"):
     cursor = conn.cursor()
     
     products = [
@@ -200,7 +206,7 @@ def seed_data(conn):
     ]
     
     cursor.executemany(
-        "INSERT INTO products (name, category, price, weight, stock, image_url) VALUES (?, ?, ?, ?, ?, ?)",
+        f"INSERT INTO products (name, category, price, weight, stock, image_url) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})",
         products
     )
     
@@ -220,7 +226,7 @@ def seed_data(conn):
     ]
     
     cursor.executemany(
-        "INSERT INTO orders (customer_name, mobile_number, address, payment_method, items, total_price, status, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        f"INSERT INTO orders (customer_name, mobile_number, address, payment_method, items, total_price, status, date) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})",
         orders
     )
     
