@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'models.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String baseUrl = 'https://curry-mama-api.onrender.com/api';
   
   // Custom API key header for data security validation
   static const Map<String, String> _headers = {
