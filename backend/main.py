@@ -15,6 +15,22 @@ import database
 
 app = FastAPI(title="Curry Mama Meat Admin API")
 
+@app.on_event("startup")
+def on_startup():
+    try:
+        database.init_db()
+        print("Database initialized on startup.")
+    except Exception as e:
+        print(f"Startup DB init warning: {e}")
+
+@app.get("/")
+def root():
+    return {"status": "ok", "app": "Curry Mama Meat API Server Live", "docs": "/docs"}
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
 # Setup uploads directory and mount it as /static
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
