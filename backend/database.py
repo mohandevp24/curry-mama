@@ -65,6 +65,13 @@ class SqliteDictCursor:
         rows = self._cursor.fetchall()
         return [dict(r) for r in rows]
 
+    @property
+    def lastrowid(self):
+        return self._cursor.lastrowid
+
+    def __getattr__(self, name):
+        return getattr(self._cursor, name)
+
     def close(self):
         self._cursor.close()
 
