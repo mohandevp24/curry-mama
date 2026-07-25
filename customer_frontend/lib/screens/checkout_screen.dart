@@ -56,13 +56,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           transactionId: txnId,
         );
 
-        // Step 2: Send Thank You SMS Note
-        await ApiService.sendThankYouSms(
-          mobileNumber: mobileNumber,
-          customerName: customerName,
-          orderId: DateTime.now().millisecondsSinceEpoch % 10000,
-          totalAmount: cart.totalPrice,
-        );
+        // Step 2: Send Thank You SMS Note (Non-blocking)
+        try {
+          await ApiService.sendThankYouSms(
+            mobileNumber: mobileNumber,
+            customerName: customerName,
+            orderId: DateTime.now().millisecondsSinceEpoch % 10000,
+            totalAmount: cart.totalPrice,
+          );
+        } catch (e) {
+          print('SMS Notification Note: $e');
+        }
 
         final orderTotal = cart.totalPrice;
         cart.clearCart();
