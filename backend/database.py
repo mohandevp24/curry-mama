@@ -149,6 +149,21 @@ def init_db():
         )
     """)
     
+    # Safely migrate orders table columns if DB already existed
+    cols_to_add = [
+        ("mobile_number", "TEXT NOT NULL DEFAULT ''"),
+        ("address", "TEXT NOT NULL DEFAULT ''"),
+        ("payment_method", "TEXT NOT NULL DEFAULT ''"),
+        ("payment_status", "TEXT NOT NULL DEFAULT 'Unpaid'"),
+        ("transaction_id", "TEXT NOT NULL DEFAULT ''")
+    ]
+    for col_name, col_def in cols_to_add:
+        try:
+            cursor.execute(f"ALTER TABLE orders ADD COLUMN {col_name} {col_def}")
+            conn.commit()
+        except Exception:
+            pass
+    
     # Create shops table
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS shops (

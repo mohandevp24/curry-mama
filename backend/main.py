@@ -304,13 +304,18 @@ def create_order(order: OrderCreate):
                 "INSERT INTO orders (customer_name, mobile_number, address, payment_method, items, total_price, status, date, payment_status, transaction_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
                 (order.customer_name, order.mobile_number, order.address, order.payment_method, items_json, order.total_price, order.status, date_str, order.payment_status, order.transaction_id)
             )
-            order_id = cursor.fetchone()['id']
+            res = cursor.fetchone()
+            order_id = res['id'] if (res and isinstance(res, dict) and 'id' in res) else 1
         else:
             cursor.execute(
                 "INSERT INTO orders (customer_name, mobile_number, address, payment_method, items, total_price, status, date, payment_status, transaction_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 (order.customer_name, order.mobile_number, order.address, order.payment_method, items_json, order.total_price, order.status, date_str, order.payment_status, order.transaction_id)
             )
-            order_id = cursor.lastrowid
+            order_id = getattr(cursor, 'lastrowid', None)
+            if not order_id:
+                cursor.execute("SELECT MAX(id) as max_id FROM orders")
+                row = cursor.fetchone()
+                order_id = row['max_id'] if row and row['max_id'] else 1
         conn.commit()
         conn.close()
         return {
