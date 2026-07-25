@@ -59,8 +59,8 @@ class ApiService {
       }),
     );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to place your order. Please try again!');
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to place your order. Status: ${response.statusCode}');
     }
   }
 

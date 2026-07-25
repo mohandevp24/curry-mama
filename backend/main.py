@@ -299,11 +299,18 @@ def create_order(order: OrderCreate):
     date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     items_json = json.dumps([item.dict() for item in order.items])
     try:
-        cursor.execute(
-            "INSERT INTO orders (customer_name, mobile_number, address, payment_method, items, total_price, status, date, payment_status, transaction_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
-            (order.customer_name, order.mobile_number, order.address, order.payment_method, items_json, order.total_price, order.status, date_str, order.payment_status, order.transaction_id)
-        )
-        order_id = cursor.fetchone()['id']
+        if database.USE_POSTGRES:
+            cursor.execute(
+                "INSERT INTO orders (customer_name, mobile_number, address, payment_method, items, total_price, status, date, payment_status, transaction_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                (order.customer_name, order.mobile_number, order.address, order.payment_method, items_json, order.total_price, order.status, date_str, order.payment_status, order.transaction_id)
+            )
+            order_id = cursor.fetchone()['id']
+        else:
+            cursor.execute(
+                "INSERT INTO orders (customer_name, mobile_number, address, payment_method, items, total_price, status, date, payment_status, transaction_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (order.customer_name, order.mobile_number, order.address, order.payment_method, items_json, order.total_price, order.status, date_str, order.payment_status, order.transaction_id)
+            )
+            order_id = cursor._cursor.lastrowid
         conn.commit()
         conn.close()
         return {

@@ -7962,7 +7962,8 @@ for(;;)switch(s){case 0:q=A.W(b).i("a3<1,aP<r,H>>")
 p=A.Y(new A.a3(b,new A.ZI(),q),q.i("ah.E"))
 s=2
 return A.P(A.aEs(A.eD("https://curry-mama-api.onrender.com/api/orders",0,null),B.bG.la(A.aa(["customer_name",c,"mobile_number",d,"address",a,"payment_method",e,"items",p,"total_price",g,"status","Pending","payment_status",f,"transaction_id",h],t.N,t.K)),B.ul),$async$ZH)
-case 2:if(j.b!==200)throw A.i(A.cH("Failed to place your order. Please try again!"))
+case 2:q=j.b
+if(q<200||q>=300)throw A.i(A.cH("Failed to place your order. Status: "+q))
 return A.L(null,r)}})
 return A.M($async$ZH,r)},
 ZK(a){var s=0,r=A.N(t.j),q,p
