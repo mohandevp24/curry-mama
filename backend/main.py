@@ -47,11 +47,15 @@ app.add_middleware(
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.gzip import GZipMiddleware
+
+# Add GZip Compression for maximum network response speed
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 API_KEY = os.getenv("API_KEY", "CurryMamaSecret2026")
 
 @app.middleware("http")
-async def verify_api_key(request: Request, call_next):
+async def security_and_auth_middleware(request: Request, call_next):
     # Enforce security verification on all /api endpoints except OPTIONS preflight
     if request.url.path.startswith("/api") and request.method != "OPTIONS":
         api_key = request.headers.get("X-API-Key")
@@ -60,7 +64,13 @@ async def verify_api_key(request: Request, call_next):
                 status_code=403,
                 content={"detail": "Unauthorized request: Invalid or missing X-API-Key header."}
             )
-    return await call_next(request)
+    response = await call_next(request)
+    # Add Security Headers to protect data privacy and prevent leaks
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
 
 # Upload File API
 @app.post("/api/upload")

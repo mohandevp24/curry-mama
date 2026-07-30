@@ -107,10 +107,101 @@ def get_db():
             print(f"Postgres connection failed ({e}). Falling back to SQLite...")
     
     # Fallback to SQLite
-    db_file = os.path.join(base_dir, "curry_mama.db")
+    db_dir = os.getenv("DATA_DIR") or base_dir
+    db_file = os.getenv("DB_PATH") or os.path.join(db_dir, "curry_mama.db")
     conn = sqlite3.connect(db_file)
     conn.row_factory = sqlite3.Row
     return SqliteConnectionWrapper(conn)
+
+BACKUP_JSON_PATH = os.path.join(base_dir, "orders_backup.json")
+
+def backup_orders_to_json(conn=None):
+    close_at_end = False
+    if conn is None:
+        conn = get_db()
+        close_at_end = True
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM orders ORDER BY id ASC")
+        rows = cursor.fetchall()
+        orders_list = [dict(r) for r in rows]
+        with open(BACKUP_JSON_PATH, "w", encoding="utf-8") as f:
+            json.dump(orders_list, f, indent=2)
+    except Exception as e:
+        print(f"Error backing up orders to JSON: {e}")
+    finally:
+        if close_at_end:
+            conn.close()
+
+def restore_orders_from_json(conn=None):
+    if not os.path.exists(BACKUP_JSON_PATH):
+        return
+    close_at_end = False
+    if conn is None:
+        conn = get_db()
+        close_at_end = True
+    try:
+        with open(BACKUP_JSON_PATH, "r", encoding="utf-8") as f:
+            backup_orders = json.load(f)
+        if not backup_orders:
+            return
+        
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM orders")
+        existing_ids = {row['id'] for row in cursor.fetchall()}
+
+        placeholder = "%s" if USE_POSTGRES else "?"
+        inserted_count = 0
+        for o in backup_orders:
+            if o.get('id') not in existing_ids:
+                items_str = o['items'] if isinstance(o['items'], str) else json.dumps(o['items'])
+                cursor.execute(
+                    f"INSERT INTO orders (id, customer_name, mobile_number, address, payment_method, items, total_price, status, date, payment_status, transaction_id) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})",
+                    (
+                        o.get('id'),
+                        o.get('customer_name', ''),
+                        o.get('mobile_number', ''),
+                        o.get('address', ''),
+                        o.get('payment_method', ''),
+                        items_str,
+                        o.get('total_price', 0.0),
+                        o.get('status', 'Pending'),
+                        o.get('date', datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+                        o.get('payment_status', 'Unpaid'),
+                        o.get('transaction_id', '')
+                    )
+                )
+                inserted_count += 1
+        conn.commit()
+        if inserted_count > 0:
+            print(f"Restored {inserted_count} orders from JSON backup.")
+    except Exception as e:
+        print(f"Error restoring orders from JSON: {e}")
+    finally:
+        if close_at_end:
+            conn.close()
+
+def cleanup_dummy_orders(conn=None):
+    close_at_end = False
+    if conn is None:
+        conn = get_db()
+        close_at_end = True
+    try:
+        cursor = conn.cursor()
+        dummy_mobiles = (
+            '9876543210', '9876543211', '9876543212', '9876543213',
+            '9876543214', '9876543215', '9876543216', '9876543217'
+        )
+        placeholder = "%s" if USE_POSTGRES else "?"
+        placeholders_str = ", ".join([placeholder] * len(dummy_mobiles))
+        cursor.execute(f"DELETE FROM orders WHERE mobile_number IN ({placeholders_str})", dummy_mobiles)
+        conn.commit()
+        backup_orders_to_json(conn)
+    except Exception as e:
+        print(f"Error cleaning dummy orders: {e}")
+    finally:
+        if close_at_end:
+            conn.close()
 
 def init_db():
     conn = get_db()
@@ -162,7 +253,10 @@ def init_db():
             cursor.execute(f"ALTER TABLE orders ADD COLUMN {col_name} {col_def}")
             conn.commit()
         except Exception:
-            pass
+            try:
+                conn.rollback()
+            except Exception:
+                pass
     
     # Create shops table
     cursor.execute(f"""
@@ -198,9 +292,18 @@ def init_db():
         )
     """)
 
+    # Create indexes for high-speed queries & performance
+    try:
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_mobile ON orders(mobile_number)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_date ON orders(date)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)")
+    except Exception:
+        pass
+
     conn.commit()
     
-    # Check if seed needed
+    # Check if product seed needed
     try:
         cursor.execute("SELECT COUNT(*) as count FROM products")
         row = cursor.fetchone()
@@ -209,10 +312,16 @@ def init_db():
         count = 0
 
     if count == 0:
-        print("Seeding database...")
+        print("Seeding initial products...")
         seed_data(conn, placeholder)
         
     cursor.close()
+    
+    # Restore any backed-up orders from JSON if database was reset
+    restore_orders_from_json(conn)
+    # Clean up dummy sample orders
+    cleanup_dummy_orders(conn)
+    
     conn.close()
 
 def seed_data(conn, placeholder="%s"):
@@ -232,29 +341,10 @@ def seed_data(conn, placeholder="%s"):
         products
     )
     
-    now = datetime.now()
-    day_1 = now - timedelta(days=2)
-    yesterday = now - timedelta(days=1)
-    
-    orders = [
-        ("Ramesh Kumar", "9876543210", "12, South Usman Road, T-Nagar", "Cash on Delivery", json.dumps([{"name": "Premium Chicken Breast", "quantity": 2, "price": 280.0}, {"name": "Chicken Drumsticks", "quantity": 1, "price": 320.0}]), 880.0, "Completed", day_1.strftime("%Y-%m-%d %H:%M:%S")),
-        ("Anitha Raj", "9876543211", "45, Sardar Patel Road, Adyar", "Online Pay", json.dumps([{"name": "Tender Mutton Curry Cut", "quantity": 1, "price": 780.0}]), 780.0, "Completed", (day_1 + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S")),
-        ("Vijay Anand", "9876543212", "78, G.N. Chetty Road, T-Nagar", "Cash on Delivery", json.dumps([{"name": "Spiced Chicken Kebab (Ready to Cook)", "quantity": 2, "price": 220.0}]), 440.0, "Completed", (day_1 + timedelta(hours=5)).strftime("%Y-%m-%d %H:%M:%S")),
-        ("Suresh Sharma", "9876543213", "101, Velachery Main Road, Velachery", "Online Pay", json.dumps([{"name": "Premium Lamb Chops", "quantity": 2, "price": 650.0}]), 1300.0, "Completed", yesterday.strftime("%Y-%m-%d %H:%M:%S")),
-        ("Priya Nair", "9876543214", "22, OMR Road, Thoraipakkam", "Online Pay", json.dumps([{"name": "Premium Chicken Breast", "quantity": 1, "price": 280.0}, {"name": "Fresh Fish Fillet (Seer)", "quantity": 1, "price": 450.0}]), 730.0, "Completed", (yesterday + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S")),
-        ("Karthik S", "9876543215", "5, ECR Road, Thiruvanmiyur", "Cash on Delivery", json.dumps([{"name": "Tender Mutton Curry Cut", "quantity": 1, "price": 780.0}]), 780.0, "Cancelled", (yesterday + timedelta(hours=4)).strftime("%Y-%m-%d %H:%M:%S")),
-        ("Meena Krishnan", "9876543216", "34, West Mada Street, Mylapore", "Online Pay", json.dumps([{"name": "Chicken Drumsticks", "quantity": 2, "price": 320.0}]), 640.0, "Pending", (now - timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S")),
-        ("Rahul Verma", "9876543217", "9, 2nd Main Road, Besant Nagar", "Cash on Delivery", json.dumps([{"name": "Premium Lamb Chops", "quantity": 1, "price": 650.0}, {"name": "Spiced Chicken Kebab (Ready to Cook)", "quantity": 1, "price": 220.0}]), 870.0, "Pending", (now - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")),
-    ]
-    
-    cursor.executemany(
-        f"INSERT INTO orders (customer_name, mobile_number, address, payment_method, items, total_price, status, date) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})",
-        orders
-    )
-    
     conn.commit()
     cursor.close()
 
 if __name__ == "__main__":
     init_db()
     print("Database initialized successfully.")
+

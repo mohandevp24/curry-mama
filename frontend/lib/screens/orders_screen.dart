@@ -19,6 +19,9 @@ class _OrdersScreenState extends State<OrdersScreen> with SingleTickerProviderSt
   late TabController _tabController;
   Timer? _pollingTimer;
 
+  String _selectedDateFilter = 'All Days'; // 'All Days', 'Today', 'Yesterday', 'Custom Date'
+  DateTime? _customSelectedDate;
+
   @override
   void initState() {
     super.initState();
@@ -255,28 +258,89 @@ class _OrdersScreenState extends State<OrdersScreen> with SingleTickerProviderSt
     }
   }
 
+  String _formatDateString(DateTime date) {
+    String y = date.year.toString();
+    String m = date.month.toString().padLeft(2, '0');
+    String d = date.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
+
+  String get _activeDatePrefix {
+    final now = DateTime.now();
+    if (_selectedDateFilter == 'Today') {
+      return _formatDateString(now);
+    } else if (_selectedDateFilter == 'Yesterday') {
+      return _formatDateString(now.subtract(const Duration(days: 1)));
+    } else if (_selectedDateFilter == 'Custom Date' && _customSelectedDate != null) {
+      return _formatDateString(_customSelectedDate!);
+    }
+    return ''; // 'All Days'
+  }
+
+  List<Order> get _dateFilteredOrders {
+    final prefix = _activeDatePrefix;
+    if (prefix.isEmpty) return _allOrders;
+    return _allOrders.where((o) => o.date.startsWith(prefix)).toList();
+  }
+
+  double get _dateFilteredRevenue {
+    return _dateFilteredOrders
+        .where((o) => o.status == 'Completed')
+        .fold(0.0, (sum, o) => sum + o.totalPrice);
+  }
+
   void _handleTabSelection() {
     if (_tabController.indexIsChanging) return;
     _applyFilter();
   }
 
   void _applyFilter() {
+    final scope = _dateFilteredOrders;
     setState(() {
       switch (_tabController.index) {
         case 0:
-          _filteredOrders = _allOrders;
+          _filteredOrders = scope;
           break;
         case 1:
-          _filteredOrders = _allOrders.where((o) => o.status == 'Pending').toList();
+          _filteredOrders = scope.where((o) => o.status == 'Pending').toList();
           break;
         case 2:
-          _filteredOrders = _allOrders.where((o) => o.status == 'Completed').toList();
+          _filteredOrders = scope.where((o) => o.status == 'Completed').toList();
           break;
         case 3:
-          _filteredOrders = _allOrders.where((o) => o.status == 'Cancelled').toList();
+          _filteredOrders = scope.where((o) => o.status == 'Cancelled').toList();
           break;
       }
     });
+  }
+
+  Future<void> _pickCustomDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _customSelectedDate ?? DateTime.now(),
+      firstDate: DateTime(2025),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF00C853),
+              onPrimary: Colors.black,
+              surface: Color(0xFF1E1E2E),
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _customSelectedDate = picked;
+        _selectedDateFilter = 'Custom Date';
+      });
+      _applyFilter();
+    }
   }
 
   Future<void> _changeStatus(int orderId, String newStatus) async {
@@ -348,7 +412,97 @@ class _OrdersScreenState extends State<OrdersScreen> with SingleTickerProviderSt
               ),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
+
+          // Day-Wise Filter Bar & Summary
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF16161E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF2E2E3E)),
+            ),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.calendar_month, color: Color(0xFF00C853), size: 20),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Day Filter:',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    const SizedBox(width: 12),
+                    _buildDateChip('All Days'),
+                    const SizedBox(width: 6),
+                    _buildDateChip('Today'),
+                    const SizedBox(width: 6),
+                    _buildDateChip('Yesterday'),
+                    const SizedBox(width: 6),
+                    ChoiceChip(
+                      label: Text(
+                        _selectedDateFilter == 'Custom Date' && _customSelectedDate != null
+                            ? _formatDateString(_customSelectedDate!)
+                            : 'Pick Date',
+                        style: TextStyle(
+                          color: _selectedDateFilter == 'Custom Date' ? Colors.black : Colors.white70,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      selected: _selectedDateFilter == 'Custom Date',
+                      selectedColor: const Color(0xFF00C853),
+                      backgroundColor: const Color(0xFF1E1E2E),
+                      onSelected: (bool selected) {
+                        if (selected) {
+                          _pickCustomDate();
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E2E),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Text('Day Total Orders: ', style: TextStyle(color: Colors.white54, fontSize: 13)),
+                          Text('${_dateFilteredOrders.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00C853).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF00C853).withOpacity(0.4)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Text('Day Revenue: ', style: TextStyle(color: Color(0xFF00C853), fontSize: 13, fontWeight: FontWeight.bold)),
+                          Text('₹${_dateFilteredRevenue.toStringAsFixed(0)}', style: const TextStyle(color: Color(0xFF00C853), fontWeight: FontWeight.w900, fontSize: 15)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
 
           // Filters TabBar
           TabBar(
@@ -658,6 +812,31 @@ class _OrdersScreenState extends State<OrdersScreen> with SingleTickerProviderSt
             )
         ],
       ),
+    );
+  }
+
+  Widget _buildDateChip(String label) {
+    final bool isSelected = _selectedDateFilter == label;
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.black : Colors.white70,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
+      selected: isSelected,
+      selectedColor: const Color(0xFF00C853),
+      backgroundColor: const Color(0xFF1E1E2E),
+      onSelected: (bool selected) {
+        if (selected) {
+          setState(() {
+            _selectedDateFilter = label;
+          });
+          _applyFilter();
+        }
+      },
     );
   }
 
