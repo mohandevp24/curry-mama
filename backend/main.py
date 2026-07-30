@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request
+from fastapi.responses import JSONResponse
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -14,6 +16,9 @@ from datetime import datetime
 import database
 
 app = FastAPI(title="Curry Mama Meat Admin API")
+
+# Add GZip Compression for maximum network response speed
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 @app.on_event("startup")
 def on_startup():
@@ -44,13 +49,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-from fastapi import Request
-from fastapi.responses import JSONResponse
-from fastapi.middleware.gzip import GZipMiddleware
-
-# Add GZip Compression for maximum network response speed
-app.add_middleware(GZipMiddleware, minimum_size=500)
 
 API_KEY = os.getenv("API_KEY", "CurryMamaSecret2026")
 
