@@ -200,7 +200,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 'category': categoryController.text,
                 'price': double.tryParse(priceController.text) ?? 0.0,
                 'weight': weightController.text,
-                'stock': int.tryParse(stockController.text) ?? 0,
+                'stock': (int.tryParse(stockController.text.trim()) ?? 50) <= 0 ? 50 : (int.tryParse(stockController.text.trim()) ?? 50),
                 'image_url': imageUrlController.text,
               };
 

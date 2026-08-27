@@ -202,6 +202,20 @@ def send_thankyou_sms(req: ThankYouSmsRequest):
     print(f"==================================================")
     return {"success": True, "message": "Thank you SMS sent successfully"}
 
+def _db_insert_item(conn, cursor, sql: str, params: tuple, table_name: str) -> int:
+    if database.USE_POSTGRES:
+        cursor.execute(sql + " RETURNING id", params)
+        res = cursor.fetchone()
+        return res['id'] if (res and isinstance(res, dict) and 'id' in res) else 1
+    else:
+        cursor.execute(sql, params)
+        row_id = getattr(cursor, 'lastrowid', None)
+        if not row_id:
+            cursor.execute(f"SELECT MAX(id) as max_id FROM {table_name}")
+            row = cursor.fetchone()
+            row_id = row['max_id'] if row and row['max_id'] else 1
+        return row_id
+
 # Products API
 @app.get("/api/products", response_model=List[ProductResponse])
 def get_products():
@@ -214,26 +228,14 @@ def get_products():
 
 @app.post("/api/products", response_model=ProductResponse)
 def create_product(product: ProductCreate):
+    if product.stock <= 0:
+        product.stock = 50
     conn = database.get_db()
     cursor = conn.cursor()
     try:
-        if database.USE_POSTGRES:
-            cursor.execute(
-                "INSERT INTO products (name, category, price, weight, stock, image_url) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
-                (product.name, product.category, product.price, product.weight, product.stock, product.image_url)
-            )
-            res = cursor.fetchone()
-            product_id = res['id'] if (res and isinstance(res, dict) and 'id' in res) else 1
-        else:
-            cursor.execute(
-                "INSERT INTO products (name, category, price, weight, stock, image_url) VALUES (%s, %s, %s, %s, %s, %s)",
-                (product.name, product.category, product.price, product.weight, product.stock, product.image_url)
-            )
-            product_id = getattr(cursor, 'lastrowid', None)
-            if not product_id:
-                cursor.execute("SELECT MAX(id) as max_id FROM products")
-                row = cursor.fetchone()
-                product_id = row['max_id'] if row and row['max_id'] else 1
+        sql = "INSERT INTO products (name, category, price, weight, stock, image_url) VALUES (%s, %s, %s, %s, %s, %s)"
+        params = (product.name, product.category, product.price, product.weight, product.stock, product.image_url)
+        product_id = _db_insert_item(conn, cursor, sql, params, "products")
         conn.commit()
         conn.close()
         return {**product.dict(), "id": product_id}
@@ -243,6 +245,8 @@ def create_product(product: ProductCreate):
 
 @app.put("/api/products/{product_id}", response_model=ProductResponse)
 def update_product(product_id: int, product: ProductCreate):
+    if product.stock <= 0:
+        product.stock = 50
     conn = database.get_db()
     cursor = conn.cursor()
     cursor.execute("SELECT id FROM products WHERE id = %s", (product_id,))
