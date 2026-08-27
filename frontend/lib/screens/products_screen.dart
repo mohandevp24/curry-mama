@@ -101,7 +101,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     final categoryController = TextEditingController(text: product?.category ?? 'Chicken');
     final priceController = TextEditingController(text: product?.price.toString() ?? '');
     final weightController = TextEditingController(text: product?.weight ?? '500g');
-    final stockController = TextEditingController(text: product?.stock.toString() ?? '10');
+    final stockController = TextEditingController(text: product?.stock.toString() ?? '50');
     final imageUrlController = TextEditingController(
       text: product?.imageUrl ?? 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=500&auto=format&fit=crop&q=60'
     );

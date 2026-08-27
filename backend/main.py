@@ -217,11 +217,23 @@ def create_product(product: ProductCreate):
     conn = database.get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            "INSERT INTO products (name, category, price, weight, stock, image_url) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
-            (product.name, product.category, product.price, product.weight, product.stock, product.image_url)
-        )
-        product_id = cursor.fetchone()['id']
+        if database.USE_POSTGRES:
+            cursor.execute(
+                "INSERT INTO products (name, category, price, weight, stock, image_url) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+                (product.name, product.category, product.price, product.weight, product.stock, product.image_url)
+            )
+            res = cursor.fetchone()
+            product_id = res['id'] if (res and isinstance(res, dict) and 'id' in res) else 1
+        else:
+            cursor.execute(
+                "INSERT INTO products (name, category, price, weight, stock, image_url) VALUES (%s, %s, %s, %s, %s, %s)",
+                (product.name, product.category, product.price, product.weight, product.stock, product.image_url)
+            )
+            product_id = getattr(cursor, 'lastrowid', None)
+            if not product_id:
+                cursor.execute("SELECT MAX(id) as max_id FROM products")
+                row = cursor.fetchone()
+                product_id = row['max_id'] if row and row['max_id'] else 1
         conn.commit()
         conn.close()
         return {**product.dict(), "id": product_id}
@@ -548,14 +560,47 @@ def create_delivery(delivery: DeliveryCreate):
     conn = database.get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            "INSERT INTO delivery_partners (name, mobile_number, location) VALUES (%s, %s, %s) RETURNING id",
-            (delivery.name, delivery.mobile_number, delivery.location)
-        )
-        delivery_id = cursor.fetchone()['id']
+        if database.USE_POSTGRES:
+            cursor.execute(
+                "INSERT INTO delivery_partners (name, mobile_number, location) VALUES (%s, %s, %s) RETURNING id",
+                (delivery.name, delivery.mobile_number, delivery.location)
+            )
+            res = cursor.fetchone()
+            delivery_id = res['id'] if (res and isinstance(res, dict) and 'id' in res) else 1
+        else:
+            cursor.execute(
+                "INSERT INTO delivery_partners (name, mobile_number, location) VALUES (%s, %s, %s)",
+                (delivery.name, delivery.mobile_number, delivery.location)
+            )
+            delivery_id = getattr(cursor, 'lastrowid', None)
+            if not delivery_id:
+                cursor.execute("SELECT MAX(id) as max_id FROM delivery_partners")
+                row = cursor.fetchone()
+                delivery_id = row['max_id'] if row and row['max_id'] else 1
         conn.commit()
         conn.close()
         return {**delivery.dict(), "id": delivery_id}
+    except Exception as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/delivery/{partner_id}", response_model=DeliveryResponse)
+def update_delivery(partner_id: int, delivery: DeliveryCreate):
+    conn = database.get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM delivery_partners WHERE id = %s", (partner_id,))
+    if not cursor.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Delivery partner not found")
+    
+    try:
+        cursor.execute(
+            "UPDATE delivery_partners SET name = %s, mobile_number = %s, location = %s WHERE id = %s",
+            (delivery.name, delivery.mobile_number, delivery.location, partner_id)
+        )
+        conn.commit()
+        conn.close()
+        return {**delivery.dict(), "id": partner_id}
     except Exception as e:
         conn.close()
         raise HTTPException(status_code=500, detail=str(e))

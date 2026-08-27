@@ -195,6 +195,19 @@ class ApiService {
     }
   }
 
+  static Future<DeliveryPartner> updateDeliveryPartner(int id, Map<String, dynamic> deliveryData) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/delivery/$id'),
+      headers: _jsonHeaders,
+      body: json.encode(deliveryData),
+    );
+    if (response.statusCode == 200) {
+      return DeliveryPartner.fromJson(json.decode(response.body));
+    } else {
+      throw Exception('Failed to update delivery partner');
+    }
+  }
+
   static Future<void> deleteDeliveryPartner(int id) async {
     final response = await http.delete(Uri.parse('$baseUrl/delivery/$id'), headers: _headers);
     if (response.statusCode != 200) {

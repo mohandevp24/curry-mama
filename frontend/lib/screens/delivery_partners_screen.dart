@@ -53,17 +53,18 @@ class _DeliveryPartnersScreenState extends State<DeliveryPartnersScreen> {
     }
   }
 
-  void _showAddPartnerDialog() {
-    final nameController = TextEditingController();
-    final mobileController = TextEditingController();
-    final locationController = TextEditingController();
+  void _showAddEditPartnerDialog([DeliveryPartner? partner]) {
+    final bool isEdit = partner != null;
+    final nameController = TextEditingController(text: partner?.name ?? '');
+    final mobileController = TextEditingController(text: partner?.mobileNumber ?? '');
+    final locationController = TextEditingController(text: partner?.location ?? '');
     final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF16161E),
-        title: const Text('Add Delivery Partner', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(isEdit ? 'Edit Delivery Partner' : 'Add Delivery Partner', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: Form(
           key: formKey,
           child: SingleChildScrollView(
@@ -118,13 +119,24 @@ class _DeliveryPartnersScreenState extends State<DeliveryPartnersScreen> {
             onPressed: () async {
               if (formKey.currentState?.validate() ?? false) {
                 try {
-                  await ApiService.createDeliveryPartner({
+                  final data = {
                     'name': nameController.text.trim(),
                     'mobile_number': mobileController.text.trim(),
                     'location': locationController.text.trim(),
-                  });
+                  };
+                  if (isEdit) {
+                    await ApiService.updateDeliveryPartner(partner.id, data);
+                  } else {
+                    await ApiService.createDeliveryPartner(data);
+                  }
                   Navigator.pop(context);
                   _fetchPartners();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(isEdit ? 'Delivery partner updated successfully!' : 'Delivery partner added successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
@@ -133,7 +145,7 @@ class _DeliveryPartnersScreenState extends State<DeliveryPartnersScreen> {
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00C853), foregroundColor: Colors.black),
-            child: const Text('Add Partner', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(isEdit ? 'Save Changes' : 'Add Partner', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -177,7 +189,7 @@ class _DeliveryPartnersScreenState extends State<DeliveryPartnersScreen> {
                           ],
                         ),
                         ElevatedButton.icon(
-                          onPressed: _showAddPartnerDialog,
+                          onPressed: () => _showAddEditPartnerDialog(),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF00C853),
                             foregroundColor: Colors.black,
@@ -238,9 +250,20 @@ class _DeliveryPartnersScreenState extends State<DeliveryPartnersScreen> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                      onPressed: () => _deletePartner(partner.id),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, color: Color(0xFF00C853)),
+                                          onPressed: () => _showAddEditPartnerDialog(partner),
+                                          tooltip: 'Edit Partner',
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                          onPressed: () => _deletePartner(partner.id),
+                                          tooltip: 'Delete Partner',
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
