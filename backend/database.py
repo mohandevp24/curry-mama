@@ -302,19 +302,6 @@ def init_db():
         pass
 
     conn.commit()
-    
-    # Check if product seed needed
-    try:
-        cursor.execute("SELECT COUNT(*) as count FROM products")
-        row = cursor.fetchone()
-        count = row['count'] if row else 0
-    except Exception:
-        count = 0
-
-    if count == 0:
-        print("Seeding initial products...")
-        seed_data(conn, placeholder)
-        
     cursor.close()
     
     # Restore any backed-up orders from JSON if database was reset
