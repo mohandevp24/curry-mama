@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -155,12 +156,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(
-                                      item.product.imageUrl,
-                                      width: 60,
-                                      height: 60,
-                                      fit: BoxFit.cover,
-                                    ),
+                                    child: item.product.imageUrl.startsWith('data:image')
+                                        ? Image.memory(
+                                            base64Decode(item.product.imageUrl.substring(item.product.imageUrl.indexOf(',') + 1)),
+                                            width: 60,
+                                            height: 60,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => Container(
+                                              width: 60,
+                                              height: 60,
+                                              color: const Color(0xFF1A1A1A),
+                                              child: const Icon(Icons.restaurant, color: Colors.white24, size: 24),
+                                            ),
+                                          )
+                                        : Image.network(
+                                            item.product.imageUrl,
+                                            width: 60,
+                                            height: 60,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => Container(
+                                              width: 60,
+                                              height: 60,
+                                              color: const Color(0xFF1A1A1A),
+                                              child: const Icon(Icons.restaurant, color: Colors.white24, size: 24),
+                                            ),
+                                          ),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(

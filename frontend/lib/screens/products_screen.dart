@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'dart:html' as html;
 import '../api_service.dart';
@@ -120,7 +121,45 @@ class _ProductsScreenState extends State<ProductsScreen> {
               children: [
                 _buildDialogField(nameController, 'Product Name (e.g. Tender Chicken Wings)'),
                 const SizedBox(height: 12),
-                _buildDialogField(categoryController, 'Category (Chicken, Mutton, Seafood, Marinated)'),
+                StatefulBuilder(
+                  builder: (context, setStateDropdown) {
+                    final categoriesList = ['Chicken', 'Mutton', 'Seafood', 'Eggs'];
+                    final currentCategory = categoryController.text.trim();
+                    if (currentCategory.isNotEmpty && !categoriesList.contains(currentCategory)) {
+                      categoriesList.add(currentCategory);
+                    }
+                    return DropdownButtonFormField<String>(
+                      value: currentCategory.isEmpty ? 'Chicken' : currentCategory,
+                      dropdownColor: const Color(0xFF16161E),
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Category',
+                        labelStyle: const TextStyle(color: Colors.white38),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Color(0xFF2E2E3E)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Color(0xFF00C853)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      items: categoriesList
+                          .map((cat) => DropdownMenuItem<String>(
+                                value: cat,
+                                child: Text(cat),
+                              ))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setStateDropdown(() {
+                            categoryController.text = val;
+                          });
+                        }
+                      },
+                    );
+                  }
+                ),
                 const SizedBox(height: 12),
                 _buildDialogField(priceController, 'Price (INR)', TextInputType.number),
                 const SizedBox(height: 12),
@@ -149,27 +188,19 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 if (files != null && files.isNotEmpty) {
                                   final file = files[0];
                                   final reader = html.FileReader();
-                                  reader.readAsArrayBuffer(file);
-                                  reader.onLoadEnd.listen((e) async {
+                                  reader.readAsDataUrl(file);
+                                  setStateDialog(() {
+                                    isUploading = true;
+                                  });
+                                  reader.onLoadEnd.listen((e) {
+                                    final String url = reader.result as String;
                                     setStateDialog(() {
-                                      isUploading = true;
-                                    });
-                                    try {
-                                      final bytes = reader.result as List<int>;
-                                      final url = await ApiService.uploadImage(bytes, file.name);
                                       imageUrlController.text = url;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Image uploaded successfully!'), backgroundColor: Colors.green),
-                                      );
-                                    } catch (err) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Upload failed: $err'), backgroundColor: Colors.red),
-                                      );
-                                    } finally {
-                                      setStateDialog(() {
-                                        isUploading = false;
-                                      });
-                                    }
+                                      isUploading = false;
+                                    });
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Image loaded successfully as Base64!'), backgroundColor: Colors.green),
+                                    );
                                   });
                                 }
                               });
@@ -196,12 +227,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ElevatedButton(
             onPressed: () async {
               final Map<String, dynamic> data = {
-                'name': nameController.text,
-                'category': categoryController.text,
+                'name': nameController.text.trim(),
+                'category': categoryController.text.trim(),
                 'price': double.tryParse(priceController.text) ?? 0.0,
-                'weight': weightController.text,
+                'weight': weightController.text.trim(),
                 'stock': (int.tryParse(stockController.text.trim()) ?? 50) <= 0 ? 50 : (int.tryParse(stockController.text.trim()) ?? 50),
-                'image_url': imageUrlController.text,
+                'image_url': imageUrlController.text.trim(),
               };
 
               try {
@@ -357,16 +388,27 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              Image.network(
-                                p.imageUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: const Color(0xFF2E2E3E),
-                                    child: const Icon(Icons.restaurant, color: Colors.white24, size: 48),
-                                  );
-                                },
-                              ),
+                              p.imageUrl.startsWith('data:image')
+                                  ? Image.memory(
+                                      base64Decode(p.imageUrl.substring(p.imageUrl.indexOf(',') + 1)),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: const Color(0xFF2E2E3E),
+                                          child: const Icon(Icons.restaurant, color: Colors.white24, size: 48),
+                                        );
+                                      },
+                                    )
+                                  : Image.network(
+                                      p.imageUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: const Color(0xFF2E2E3E),
+                                          child: const Icon(Icons.restaurant, color: Colors.white24, size: 48),
+                                        );
+                                      },
+                                    ),
                               Positioned(
                                 top: 12,
                                 right: 12,

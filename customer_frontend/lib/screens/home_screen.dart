@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -420,18 +421,31 @@ class _HomeScreenState extends State<HomeScreen> {
             bottomLeft: Radius.circular(0),
             bottomRight: Radius.circular(0),
           ),
-          child: Image.network(
-            product.imageUrl,
-            height: height,
-            width: width ?? double.infinity,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              height: height,
-              width: width ?? double.infinity,
-              color: const Color(0xFF1A1A1A),
-              child: const Icon(Icons.restaurant, color: Colors.white24, size: 48),
-            ),
-          ),
+          child: product.imageUrl.startsWith('data:image')
+              ? Image.memory(
+                  base64Decode(product.imageUrl.substring(product.imageUrl.indexOf(',') + 1)),
+                  height: height,
+                  width: width ?? double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: height,
+                    width: width ?? double.infinity,
+                    color: const Color(0xFF1A1A1A),
+                    child: const Icon(Icons.restaurant, color: Colors.white24, size: 48),
+                  ),
+                )
+              : Image.network(
+                  product.imageUrl,
+                  height: height,
+                  width: width ?? double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: height,
+                    width: width ?? double.infinity,
+                    color: const Color(0xFF1A1A1A),
+                    child: const Icon(Icons.restaurant, color: Colors.white24, size: 48),
+                  ),
+                ),
         ),
         // Glassmorphic tag
         Positioned(
