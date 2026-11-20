@@ -258,4 +258,54 @@ class ApiService {
       throw Exception('Failed to delete banner');
     }
   }
+
+  // 7. Customers API
+  static Future<List<CustomerModel>> getCustomers() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/customers'), headers: _headers);
+      if (response.statusCode == 200) {
+        List jsonResponse = json.decode(response.body);
+        return jsonResponse.map((item) => CustomerModel.fromJson(item)).toList();
+      }
+    } catch (_) {}
+
+    // Fallback: Aggregate from live orders if offline or backend version mismatch
+    try {
+      final orders = await getOrders();
+      final Map<String, CustomerModel> map = {};
+      for (var o in orders) {
+        final key = o.mobileNumber.isNotEmpty ? o.mobileNumber : o.customerName;
+        if (key.trim().isEmpty) continue;
+
+        if (!map.containsKey(key)) {
+          map[key] = CustomerModel(
+            customerName: o.customerName.isNotEmpty ? o.customerName : 'Guest Customer',
+            mobileNumber: o.mobileNumber,
+            address: o.address,
+            totalOrders: 0,
+            totalPurchases: 0.0,
+            lastOrderDate: o.date,
+            orderHistory: [],
+          );
+        }
+
+        final existing = map[key]!;
+        existing.orderHistory.add(o);
+        map[key] = CustomerModel(
+          customerName: existing.customerName,
+          mobileNumber: existing.mobileNumber,
+          address: existing.address.isEmpty ? o.address : existing.address,
+          totalOrders: existing.totalOrders + 1,
+          totalPurchases: existing.totalPurchases + o.totalPrice,
+          lastOrderDate: existing.lastOrderDate,
+          orderHistory: existing.orderHistory,
+        );
+      }
+      final result = map.values.toList();
+      result.sort((a, b) => b.totalPurchases.compareTo(a.totalPurchases));
+      return result;
+    } catch (e) {
+      throw Exception('Failed to load customers: $e');
+    }
+  }
 }

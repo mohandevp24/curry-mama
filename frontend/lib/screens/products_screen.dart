@@ -164,6 +164,29 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 _buildDialogField(priceController, 'Price (INR)', TextInputType.number),
                 const SizedBox(height: 12),
                 _buildDialogField(weightController, 'Weight Unit (e.g. 500g, 1kg)'),
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: ['250g', '500g', '750g', '1kg', '1.5kg', '2kg'].map((w) {
+                      return ActionChip(
+                        label: Text(w, style: const TextStyle(fontSize: 11, color: Colors.white70)),
+                        backgroundColor: const Color(0xFF1E1E2E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: const BorderSide(color: Color(0xFF2E2E3E)),
+                        ),
+                        onPressed: () {
+                          setStateDialog(() {
+                            weightController.text = w;
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 _buildDialogField(stockController, 'Initial Stock Quantity', TextInputType.number),
                 const SizedBox(height: 12),

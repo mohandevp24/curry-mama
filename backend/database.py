@@ -292,6 +292,13 @@ def init_db():
         )
     """)
 
+    # Remove any default unsplash banners permanently
+    try:
+        cursor.execute("DELETE FROM banners WHERE image_url LIKE '%images.unsplash.com%' AND title IN ('Quality Chicken', 'Quality Mutton', 'Online Meat Market')")
+        conn.commit()
+    except Exception:
+        pass
+
     # Create indexes for high-speed queries & performance
     try:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_mobile ON orders(mobile_number)")

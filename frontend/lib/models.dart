@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 class Product {
   final int id;
@@ -280,5 +279,40 @@ class BannerModel {
       'is_active': isActive,
       'created_at': createdAt,
     };
+  }
+}
+
+class CustomerModel {
+  final String customerName;
+  final String mobileNumber;
+  final String address;
+  final int totalOrders;
+  final double totalPurchases;
+  final String lastOrderDate;
+  final List<Order> orderHistory;
+
+  CustomerModel({
+    required this.customerName,
+    required this.mobileNumber,
+    required this.address,
+    required this.totalOrders,
+    required this.totalPurchases,
+    required this.lastOrderDate,
+    required this.orderHistory,
+  });
+
+  factory CustomerModel.fromJson(Map<String, dynamic> json) {
+    var rawOrders = json['order_history'] as List? ?? [];
+    List<Order> parsedOrders = rawOrders.map((o) => Order.fromJson(o)).toList();
+
+    return CustomerModel(
+      customerName: json['customer_name'] ?? '',
+      mobileNumber: json['mobile_number'] ?? '',
+      address: json['address'] ?? '',
+      totalOrders: json['total_orders'] ?? parsedOrders.length,
+      totalPurchases: (json['total_purchases'] as num?)?.toDouble() ?? 0.0,
+      lastOrderDate: json['last_order_date'] ?? '',
+      orderHistory: parsedOrders,
+    );
   }
 }

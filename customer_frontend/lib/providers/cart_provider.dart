@@ -42,31 +42,53 @@ class CartProvider with ChangeNotifier {
   }
 
   List<Map<String, dynamic>> getWeightOptions(Product product) {
-    if (product.category.toLowerCase() == 'chicken') {
-      return [
-        {'label': '500g', 'qty': 1},
-        {'label': '1 Kg', 'qty': 2},
-        {'label': '1.5 Kg', 'qty': 3},
-        {'label': '2 Kg', 'qty': 4},
-        {'label': '2.5 Kg', 'qty': 5},
-        {'label': '3 Kg', 'qty': 6},
-        {'label': '3.5 Kg', 'qty': 7},
-        {'label': '4 Kg', 'qty': 8},
-        {'label': '4.5 Kg', 'qty': 9},
-        {'label': '5 Kg', 'qty': 10},
-      ];
-    } else {
-      return [
-        {'label': '250g', 'qty': 1},
-        {'label': '500g', 'qty': 2},
-        {'label': '750g', 'qty': 3},
-        {'label': '1 Kg', 'qty': 4},
-        {'label': '1.25 Kg', 'qty': 5},
-        {'label': '1.5 Kg', 'qty': 6},
-        {'label': '1.75 Kg', 'qty': 7},
-        {'label': '2 Kg', 'qty': 8},
-      ];
+    String raw = product.weight.trim().toLowerCase();
+    if (raw.isEmpty) {
+      raw = '500g';
     }
+
+    // Check if kg: e.g. "1kg", "1 kg", "1.5kg", "2kg"
+    final kgRegex = RegExp(r'^([0-9]+(?:\.[0-9]+)?)\s*k(?:g|gs)?$');
+    final kgMatch = kgRegex.firstMatch(raw);
+    if (kgMatch != null) {
+      double baseKg = double.tryParse(kgMatch.group(1)!) ?? 1.0;
+      List<Map<String, dynamic>> list = [];
+      for (int i = 1; i <= 10; i++) {
+        double currentKg = baseKg * i;
+        String label = (currentKg % 1 == 0) ? '${currentKg.toInt()} Kg' : '${currentKg.toStringAsFixed(1)} Kg';
+        list.add({'label': label, 'qty': i});
+      }
+      return list;
+    }
+
+    // Check if grams: e.g. "250g", "500g", "750g"
+    final gRegex = RegExp(r'^([0-9]+(?:\.[0-9]+)?)\s*g(?:ms|ram|rams)?$');
+    final gMatch = gRegex.firstMatch(raw);
+    if (gMatch != null) {
+      double baseG = double.tryParse(gMatch.group(1)!) ?? 500.0;
+      List<Map<String, dynamic>> list = [];
+      for (int i = 1; i <= 10; i++) {
+        double currentG = baseG * i;
+        String label;
+        if (currentG >= 1000) {
+          double kg = currentG / 1000.0;
+          label = (kg % 1 == 0) ? '${kg.toInt()} Kg' : '${kg.toStringAsFixed(1)} Kg';
+        } else {
+          label = (currentG % 1 == 0) ? '${currentG.toInt()}g' : '${currentG.toStringAsFixed(0)}g';
+        }
+        list.add({'label': label, 'qty': i});
+      }
+      return list;
+    }
+
+    // Fallback for custom labels (e.g. "1 Pack", "Piece")
+    return List.generate(10, (index) {
+      int q = index + 1;
+      return {
+        'label': q == 1 ? product.weight : '$q × ${product.weight}',
+        'qty': q,
+      };
+    });
   }
 
   String getFormattedTotalWeight(CartItem item) {

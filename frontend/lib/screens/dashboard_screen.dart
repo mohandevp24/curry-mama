@@ -108,6 +108,353 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _showNotificationsDialog() {
+    String selectedFilter = 'All';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final pendingCount = _allOrders.where((o) => o.status.toLowerCase() == 'pending').length;
+          final preparingCount = _allOrders.where((o) => o.status.toLowerCase() == 'preparing').length;
+
+          List<Order> filteredList = _allOrders;
+          if (selectedFilter == 'Pending') {
+            filteredList = _allOrders.where((o) => o.status.toLowerCase() == 'pending').toList();
+          } else if (selectedFilter == 'Preparing') {
+            filteredList = _allOrders.where((o) => o.status.toLowerCase() == 'preparing').toList();
+          } else if (selectedFilter == 'Completed') {
+            filteredList = _allOrders.where((o) => o.status.toLowerCase() == 'completed' || o.status.toLowerCase() == 'delivered').toList();
+          }
+
+          return Dialog(
+            backgroundColor: const Color(0xFF16161E),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: const BorderSide(color: Color(0xFF00C853), width: 1.5),
+            ),
+            child: Container(
+              width: 720,
+              constraints: const BoxConstraints(maxHeight: 700),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Dialog Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00C853).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.notifications_active, color: Color(0xFF00C853), size: 22),
+                          ),
+                          const SizedBox(width: 14),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Order Notifications & Alerts',
+                                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${_allOrders.length} Total Orders Recorded',
+                                style: const TextStyle(color: Colors.white60, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Filter Chips
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      _buildNotifFilterChip('All', 'All (${_allOrders.length})', selectedFilter, (val) => setDialogState(() => selectedFilter = val)),
+                      _buildNotifFilterChip('Pending', 'Pending ($pendingCount)', selectedFilter, (val) => setDialogState(() => selectedFilter = val), badgeColor: Colors.orangeAccent),
+                      _buildNotifFilterChip('Preparing', 'Preparing ($preparingCount)', selectedFilter, (val) => setDialogState(() => selectedFilter = val), badgeColor: Colors.lightBlueAccent),
+                      _buildNotifFilterChip('Completed', 'Completed', selectedFilter, (val) => setDialogState(() => selectedFilter = val), badgeColor: const Color(0xFF00C853)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Notifications List
+                  Expanded(
+                    child: filteredList.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.notifications_off_outlined, color: Colors.white24, size: 48),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'No orders found under "$selectedFilter".',
+                                  style: const TextStyle(color: Colors.white54, fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: filteredList.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final order = filteredList[index];
+                              final statusColor = _getNotifStatusColor(order.status);
+
+                              return Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E1E2E),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: order.status.toLowerCase() == 'pending'
+                                        ? Colors.orangeAccent.withOpacity(0.4)
+                                        : Colors.white12,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black38,
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                'Order #${order.id}',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              order.date,
+                                              style: const TextStyle(color: Colors.white38, fontSize: 11),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: statusColor.withOpacity(0.15),
+                                                borderRadius: BorderRadius.circular(16),
+                                                border: Border.all(color: statusColor.withOpacity(0.5)),
+                                              ),
+                                              child: Text(
+                                                order.status,
+                                                style: TextStyle(
+                                                  color: statusColor,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              '₹${order.totalPrice.toStringAsFixed(0)}',
+                                              style: const TextStyle(
+                                                color: Color(0xFF00C853),
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+
+                                    // Customer Details
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.person, color: Color(0xFF00C853), size: 14),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          order.customerName,
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Icon(Icons.phone, color: Colors.white38, size: 13),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          order.mobileNumber.isNotEmpty ? '+91 ${order.mobileNumber}' : 'No Mobile',
+                                          style: const TextStyle(color: Colors.white60, fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                    if (order.address.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.location_on, color: Colors.white38, size: 13),
+                                          const SizedBox(width: 4),
+                                          Expanded(
+                                            child: Text(
+                                              order.address,
+                                              style: const TextStyle(color: Colors.white38, fontSize: 11),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                    const SizedBox(height: 8),
+
+                                    // Items
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      children: order.items.map((it) {
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF16161E),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: Colors.white10),
+                                          ),
+                                          child: Text(
+                                            '${it.name} × ${it.quantity}',
+                                            style: const TextStyle(color: Colors.white70, fontSize: 11),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                    const SizedBox(height: 12),
+
+                                    // Status Update
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Payment: ${order.paymentMethod} • ${order.paymentStatus}',
+                                          style: TextStyle(
+                                            color: order.paymentStatus.toLowerCase() == 'paid'
+                                                ? const Color(0xFF00C853)
+                                                : Colors.orangeAccent,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            value: order.status,
+                                            dropdownColor: const Color(0xFF16161E),
+                                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                            icon: const Icon(Icons.edit, color: Color(0xFF00C853), size: 14),
+                                            items: const [
+                                              DropdownMenuItem(value: 'Pending', child: Text('Pending')),
+                                              DropdownMenuItem(value: 'Preparing', child: Text('Preparing')),
+                                              DropdownMenuItem(value: 'Out for Delivery', child: Text('Out for Delivery')),
+                                              DropdownMenuItem(value: 'Completed', child: Text('Completed')),
+                                              DropdownMenuItem(value: 'Cancelled', child: Text('Cancelled')),
+                                            ],
+                                            onChanged: (newStatus) {
+                                              if (newStatus != null && newStatus != order.status) {
+                                                _updateStatus(order.id, newStatus);
+                                                setDialogState(() {
+                                                  final idx = _allOrders.indexWhere((o) => o.id == order.id);
+                                                  if (idx >= 0) {
+                                                    _allOrders[idx] = Order(
+                                                      id: order.id,
+                                                      customerName: order.customerName,
+                                                      mobileNumber: order.mobileNumber,
+                                                      address: order.address,
+                                                      paymentMethod: order.paymentMethod,
+                                                      items: order.items,
+                                                      totalPrice: order.totalPrice,
+                                                      status: newStatus,
+                                                      date: order.date,
+                                                      paymentStatus: order.paymentStatus,
+                                                      transactionId: order.transactionId,
+                                                    );
+                                                  }
+                                                });
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildNotifFilterChip(String key, String label, String currentSelected, Function(String) onSelect, {Color? badgeColor}) {
+    final bool isSelected = currentSelected == key;
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.black : Colors.white70,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          fontSize: 12,
+        ),
+      ),
+      selected: isSelected,
+      onSelected: (_) => onSelect(key),
+      selectedColor: badgeColor ?? const Color(0xFF00C853),
+      backgroundColor: const Color(0xFF1E1E2E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: isSelected ? Colors.transparent : Colors.white12),
+      ),
+    );
+  }
+
+  Color _getNotifStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+      case 'delivered':
+        return const Color(0xFF00C853);
+      case 'pending':
+        return Colors.orangeAccent;
+      case 'preparing':
+        return Colors.lightBlueAccent;
+      case 'out for delivery':
+        return Colors.purpleAccent;
+      case 'cancelled':
+        return Colors.redAccent;
+      default:
+        return Colors.white54;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -216,6 +563,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     const SizedBox(width: 16),
+                    // Notifications Icon with live pending orders badge
+                    Builder(
+                      builder: (context) {
+                        final pendingCount = _allOrders.where((o) => o.status.toLowerCase() == 'pending').length;
+                        return InkWell(
+                          onTap: _showNotificationsDialog,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E1E2E),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: pendingCount > 0 
+                                    ? Colors.orangeAccent.withOpacity(0.7) 
+                                    : const Color(0xFF00C853).withOpacity(0.3),
+                                width: pendingCount > 0 ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Icon(
+                                  pendingCount > 0 ? Icons.notifications_active : Icons.notifications_outlined,
+                                  color: pendingCount > 0 ? Colors.orangeAccent : const Color(0xFF00C853),
+                                  size: 22,
+                                ),
+                                if (pendingCount > 0)
+                                  Positioned(
+                                    right: -6,
+                                    top: -6,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.redAccent,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                      child: Center(
+                                        child: Text(
+                                          '$pendingCount',
+                                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 12),
                     ElevatedButton.icon(
                       onPressed: () => _fetchData(isSilent: true),
                       style: ElevatedButton.styleFrom(

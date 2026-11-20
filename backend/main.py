@@ -133,6 +133,15 @@ class OrderResponse(BaseModel):
     payment_status: str
     transaction_id: str
 
+class CustomerResponse(BaseModel):
+    customer_name: str
+    mobile_number: str
+    address: str
+    total_orders: int
+    total_purchases: float
+    last_order_date: str
+    order_history: List[OrderResponse]
+
 class OrderStatusUpdate(BaseModel):
     status: str
 
@@ -414,6 +423,54 @@ def update_payment_status(order_id: int, status_update: PaymentStatusUpdate):
         conn.close()
         raise HTTPException(status_code=500, detail=str(e))
 
+# Customers API
+@app.get("/api/customers", response_model=List[CustomerResponse])
+def get_customers():
+    conn = database.get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM orders ORDER BY id DESC")
+    rows = cursor.fetchall()
+    conn.close()
+
+    customers_map = {}
+    for r in rows:
+        order_dict = dict(r)
+        items_val = order_dict.get("items", "[]")
+        if isinstance(items_val, str):
+            try:
+                order_dict["items"] = json.loads(items_val)
+            except Exception:
+                order_dict["items"] = []
+
+        mobile = (order_dict.get("mobile_number") or "").strip()
+        name = (order_dict.get("customer_name") or "Guest Customer").strip()
+        key = mobile if mobile else name
+
+        if not key:
+            continue
+
+        if key not in customers_map:
+            customers_map[key] = {
+                "customer_name": name,
+                "mobile_number": mobile,
+                "address": (order_dict.get("address") or "").strip(),
+                "total_orders": 0,
+                "total_purchases": 0.0,
+                "last_order_date": order_dict.get("date") or "",
+                "order_history": []
+            }
+
+        cust = customers_map[key]
+        cust["total_orders"] += 1
+        cust["total_purchases"] += float(order_dict.get("total_price") or 0.0)
+        if not cust["address"] and order_dict.get("address"):
+            cust["address"] = order_dict.get("address").strip()
+        cust["order_history"].append(order_dict)
+
+    result = list(customers_map.values())
+    result.sort(key=lambda c: (c["total_purchases"], c["total_orders"]), reverse=True)
+    return result
+
 # Analytics API
 @app.get("/api/analytics")
 def get_analytics():
@@ -629,24 +686,6 @@ def get_banners():
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM banners ORDER BY id DESC")
     rows = cursor.fetchall()
-    
-    if not rows:
-        # Seed initial default banners if DB table is empty
-        initial_banners = [
-            ("https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80", "Quality Chicken", True),
-            ("https://images.unsplash.com/photo-1603048588665-791ca8aea617?auto=format&fit=crop&q=80", "Quality Mutton", True),
-            ("https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80", "Online Meat Market", True),
-        ]
-        for img, title, active in initial_banners:
-            now_iso = datetime.now().isoformat()
-            cursor.execute(
-                "INSERT INTO banners (image_url, title, is_active, created_at) VALUES (%s, %s, %s, %s)",
-                (img, title, active, now_iso)
-            )
-        conn.commit()
-        cursor.execute("SELECT * FROM banners ORDER BY id DESC")
-        rows = cursor.fetchall()
-        
     conn.close()
     return [dict(row) for row in rows]
 

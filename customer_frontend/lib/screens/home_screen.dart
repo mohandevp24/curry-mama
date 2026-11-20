@@ -19,11 +19,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Product> _products = [];
-  List<String> _bannerImages = [
-    'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80', // Quality Chicken
-    'https://images.unsplash.com/photo-1603048588665-791ca8aea617?auto=format&fit=crop&q=80', // Quality Mutton
-    'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80', // Online Meat Market
-  ];
+  List<String> _bannerImages = [];
   int _currentBannerIndex = 0;
   Timer? _bannerTimer;
   bool _isLoading = true;
@@ -59,14 +55,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchBanners() async {
     try {
       final banners = await ApiService.getBanners();
-      if (banners.isNotEmpty) {
-        setState(() {
-          _bannerImages = banners.map((b) => b.imageUrl).toList();
-          _currentBannerIndex = 0;
-        });
-      }
+      setState(() {
+        _bannerImages = banners.where((b) => b.isActive).map((b) => b.imageUrl).toList();
+        _currentBannerIndex = 0;
+      });
     } catch (_) {
-      // Keep default fallbacks if backend is unreachable
+      // Backend error or offline
     }
   }
 
@@ -254,17 +248,51 @@ class _HomeScreenState extends State<HomeScreen> {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 800),
-              child: Image.network(
-                _bannerImages[_currentBannerIndex],
-                key: ValueKey<int>(_currentBannerIndex),
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                errorBuilder: (_, __, ___) => Container(color: Colors.grey[900]),
+            if (_bannerImages.isNotEmpty)
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 800),
+                child: Image.network(
+                  _bannerImages[_currentBannerIndex % _bannerImages.length],
+                  key: ValueKey<int>(_currentBannerIndex),
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  errorBuilder: (_, __, ___) => Container(color: Colors.grey[900]),
+                ),
+              )
+            else
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF0A192F), Color(0xFF172A45), Color(0xFF0F0F12)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.restaurant_menu, color: Color(0xFF00E676), size: 44),
+                      const SizedBox(height: 8),
+                      Text(
+                        'CURRY MAMA',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isMobile ? 22 : 28,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        lang.t('100% Fresh & Antibiotic-Free Meat', '100% பிரஷ் & சுகாதாரமான இறைச்சி'),
+                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(

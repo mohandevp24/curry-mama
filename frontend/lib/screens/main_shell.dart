@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 import 'products_screen.dart';
 import 'orders_screen.dart';
+import 'customers_screen.dart';
 import 'shop_partners_screen.dart';
 import 'delivery_partners_screen.dart';
 import 'banners_screen.dart';
@@ -23,6 +24,7 @@ class _MainShellState extends State<MainShell> {
     const DashboardScreen(),
     const ProductsScreen(),
     const OrdersScreen(),
+    const CustomersScreen(),
     const ShopPartnersScreen(),
     const DeliveryPartnersScreen(),
     const BannersScreen(),
@@ -135,11 +137,13 @@ class _MainShellState extends State<MainShell> {
                 const SizedBox(height: 8),
                 _buildNavItem(2, 'Orders Log', Icons.receipt_long_outlined, Icons.receipt_long),
                 const SizedBox(height: 8),
-                _buildNavItem(3, 'Shop Partners', Icons.storefront_outlined, Icons.storefront),
+                _buildNavItem(3, 'Customers Log', Icons.people_alt_outlined, Icons.people_alt),
                 const SizedBox(height: 8),
-                _buildNavItem(4, 'Delivery Partners', Icons.local_shipping_outlined, Icons.local_shipping),
+                _buildNavItem(4, 'Shop Partners', Icons.storefront_outlined, Icons.storefront),
                 const SizedBox(height: 8),
-                _buildNavItem(5, 'Banners', Icons.view_carousel_outlined, Icons.view_carousel),
+                _buildNavItem(5, 'Delivery Partners', Icons.local_shipping_outlined, Icons.local_shipping),
+                const SizedBox(height: 8),
+                _buildNavItem(6, 'Banners', Icons.view_carousel_outlined, Icons.view_carousel),
               ],
             ),
           ),
@@ -282,11 +286,11 @@ class _MainShellState extends State<MainShell> {
           ),
           ListTile(
             leading: Icon(
-              _selectedIndex == 3 ? Icons.storefront : Icons.storefront_outlined,
+              _selectedIndex == 3 ? Icons.people_alt : Icons.people_alt_outlined,
               color: _selectedIndex == 3 ? Theme.of(context).primaryColor : Colors.white60,
             ),
             title: Text(
-              'Shop Partners',
+              'Customers Log',
               style: TextStyle(color: _selectedIndex == 3 ? Colors.white : Colors.white60),
             ),
             selected: _selectedIndex == 3,
@@ -299,11 +303,11 @@ class _MainShellState extends State<MainShell> {
           ),
           ListTile(
             leading: Icon(
-              _selectedIndex == 4 ? Icons.local_shipping : Icons.local_shipping_outlined,
+              _selectedIndex == 4 ? Icons.storefront : Icons.storefront_outlined,
               color: _selectedIndex == 4 ? Theme.of(context).primaryColor : Colors.white60,
             ),
             title: Text(
-              'Delivery Partners',
+              'Shop Partners',
               style: TextStyle(color: _selectedIndex == 4 ? Colors.white : Colors.white60),
             ),
             selected: _selectedIndex == 4,
@@ -316,17 +320,34 @@ class _MainShellState extends State<MainShell> {
           ),
           ListTile(
             leading: Icon(
-              _selectedIndex == 5 ? Icons.view_carousel : Icons.view_carousel_outlined,
+              _selectedIndex == 5 ? Icons.local_shipping : Icons.local_shipping_outlined,
               color: _selectedIndex == 5 ? Theme.of(context).primaryColor : Colors.white60,
             ),
             title: Text(
-              'Banners',
+              'Delivery Partners',
               style: TextStyle(color: _selectedIndex == 5 ? Colors.white : Colors.white60),
             ),
             selected: _selectedIndex == 5,
             onTap: () {
               setState(() {
                 _selectedIndex = 5;
+              });
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              _selectedIndex == 6 ? Icons.view_carousel : Icons.view_carousel_outlined,
+              color: _selectedIndex == 6 ? Theme.of(context).primaryColor : Colors.white60,
+            ),
+            title: Text(
+              'Banners',
+              style: TextStyle(color: _selectedIndex == 6 ? Colors.white : Colors.white60),
+            ),
+            selected: _selectedIndex == 6,
+            onTap: () {
+              setState(() {
+                _selectedIndex = 6;
               });
               Navigator.pop(context);
             },
