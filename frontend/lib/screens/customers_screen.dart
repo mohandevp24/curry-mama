@@ -72,111 +72,115 @@ class _CustomersScreenState extends State<CustomersScreen> {
   void _showOrderHistoryDialog(CustomerModel customer) {
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => Dialog(
-          backgroundColor: const Color(0xFF16161E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Color(0xFF00C853), width: 1.5),
-          ),
-          child: Container(
-            width: 700,
-            constraints: const BoxConstraints(maxHeight: 650),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with Customer Info
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: const Color(0xFF00C853).withOpacity(0.2),
-                          child: Text(
-                            customer.customerName.isNotEmpty
-                                ? customer.customerName[0].toUpperCase()
-                                : 'C',
-                            style: const TextStyle(
-                              color: Color(0xFF00C853),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              customer.customerName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final bool isMobile = screenWidth < 700;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) => Dialog(
+            backgroundColor: const Color(0xFF16161E),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: const BorderSide(color: Color(0xFF00C853), width: 1.5),
+            ),
+            child: Container(
+              width: isMobile ? screenWidth * 0.95 : 700,
+              constraints: const BoxConstraints(maxHeight: 650),
+              padding: EdgeInsets.all(isMobile ? 16 : 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header with Customer Info
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: isMobile ? 20 : 24,
+                            backgroundColor: const Color(0xFF00C853).withOpacity(0.2),
+                            child: Text(
+                              customer.customerName.isNotEmpty
+                                  ? customer.customerName[0].toUpperCase()
+                                  : 'C',
+                              style: TextStyle(
+                                color: const Color(0xFF00C853),
                                 fontWeight: FontWeight.bold,
+                                fontSize: isMobile ? 16 : 20,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                customer.customerName,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: isMobile ? 15 : 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                customer.mobileNumber.isNotEmpty ? '+91 ${customer.mobileNumber}' : 'No mobile number',
+                                style: const TextStyle(color: Colors.white60, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Address & Stats Banner
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E2E),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, color: Color(0xFF00C853), size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            customer.address.isNotEmpty ? customer.address : 'Address: Not specified',
+                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
                             Text(
-                              customer.mobileNumber.isNotEmpty ? '+91 ${customer.mobileNumber}' : 'No mobile number',
-                              style: const TextStyle(color: Colors.white60, fontSize: 13),
+                              '₹${customer.totalPurchases.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                color: const Color(0xFF00C853),
+                                fontSize: isMobile ? 15 : 18,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            Text(
+                              '${customer.totalOrders} ${customer.totalOrders == 1 ? 'Order' : 'Orders'}',
+                              style: const TextStyle(color: Colors.white38, fontSize: 11),
                             ),
                           ],
                         ),
                       ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white70),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Address & Stats Banner
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E2E),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white10),
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined, color: Color(0xFF00C853), size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          customer.address.isNotEmpty ? customer.address : 'Address: Not specified',
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '₹${customer.totalPurchases.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              color: Color(0xFF00C853),
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          Text(
-                            '${customer.totalOrders} ${customer.totalOrders == 1 ? 'Order' : 'Orders'} Total',
-                            style: const TextStyle(color: Colors.white38, fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
                 const Text(
                   'Order History',
@@ -330,9 +334,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -382,286 +387,477 @@ class _CustomersScreenState extends State<CustomersScreen> {
               : RefreshIndicator(
                   onRefresh: () => _fetchCustomers(),
                   color: const Color(0xFF00C853),
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(28.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Top Header
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Builder(
+                    builder: (context) {
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final bool isMobile = screenWidth < 700;
+
+                      return SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.all(isMobile ? 14.0 : 28.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Customer Management',
-                                  style: TextStyle(color: Colors.white38, fontSize: 13, fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Customers Log',
-                                      style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF00C853).withOpacity(0.15),
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(color: const Color(0xFF00C853).withOpacity(0.4)),
+                            // Top Header (Responsive)
+                            isMobile
+                                ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Customer Management',
+                                        style: TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold),
                                       ),
-                                      child: Text(
-                                        '${_customers.length} Registered',
-                                        style: const TextStyle(
-                                          color: Color(0xFF00C853),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          const Text(
+                                            'Customers Log',
+                                            style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF00C853).withOpacity(0.15),
+                                              borderRadius: BorderRadius.circular(16),
+                                              border: Border.all(color: const Color(0xFF00C853).withOpacity(0.4)),
+                                            ),
+                                            child: Text(
+                                              '${_customers.length}',
+                                              style: const TextStyle(
+                                                color: Color(0xFF00C853),
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton.icon(
+                                          onPressed: () => _fetchCustomers(isSilent: true),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF1E1E2E),
+                                            foregroundColor: const Color(0xFF00C853),
+                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
+                                            ),
+                                          ),
+                                          icon: const Icon(Icons.refresh, size: 18),
+                                          label: const Text('Refresh Customers', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            ElevatedButton.icon(
-                              onPressed: () => _fetchCustomers(isSilent: true),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1E1E2E),
-                                foregroundColor: const Color(0xFF00C853),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
-                                ),
-                              ),
-                              icon: const Icon(Icons.refresh, size: 18),
-                              label: const Text('Refresh', style: TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Analytics Summary Cards
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isWide = constraints.maxWidth > 800;
-                            return GridView.count(
-                              crossAxisCount: isWide ? 4 : 2,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              crossAxisSpacing: 14,
-                              mainAxisSpacing: 14,
-                              childAspectRatio: isWide ? 2.2 : 1.6,
-                              children: [
-                                _buildSummaryCard('Total Customers', '${_customers.length}', Icons.people_alt, const Color(0xFF00C853)),
-                                _buildSummaryCard('Total Purchases', '₹${totalRevenue.toStringAsFixed(0)}', Icons.payments, Colors.lightBlueAccent),
-                                _buildSummaryCard('Repeat Customers', '$repeatCount', Icons.repeat, Colors.amberAccent),
-                                _buildSummaryCard('Avg. Order Value', '₹${avgSpend.toStringAsFixed(0)}', Icons.analytics_outlined, Colors.purpleAccent),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Search Bar
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF16161E),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white12),
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              icon: Icon(Icons.search, color: Color(0xFF00C853)),
-                              hintText: 'Search customer by name, mobile number, or address...',
-                              hintStyle: TextStyle(color: Colors.white38),
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Customers List
-                        if (_filteredCustomers.isEmpty)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(40),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF16161E),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.white10),
-                            ),
-                            child: const Column(
-                              children: [
-                                Icon(Icons.person_search, color: Colors.white24, size: 48),
-                                SizedBox(height: 12),
-                                Text(
-                                  'No customers found matching your search.',
-                                  style: TextStyle(color: Colors.white54, fontSize: 14),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _filteredCustomers.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final customer = _filteredCustomers[index];
-
-                              return Container(
-                                padding: const EdgeInsets.all(18),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF16161E),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.white12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    // Avatar
-                                    CircleAvatar(
-                                      radius: 24,
-                                      backgroundColor: const Color(0xFF00C853).withOpacity(0.15),
-                                      child: Text(
-                                        customer.customerName.isNotEmpty
-                                            ? customer.customerName[0].toUpperCase()
-                                            : 'C',
-                                        style: const TextStyle(
-                                          color: Color(0xFF00C853),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-
-                                    // Customer Details
-                                    Expanded(
-                                      child: Column(
+                                    ],
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Row(
-                                            children: [
-                                              Text(
-                                                customer.customerName,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              if (customer.totalOrders > 1)
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.amberAccent.withOpacity(0.15),
-                                                    borderRadius: BorderRadius.circular(4),
-                                                  ),
-                                                  child: const Text(
-                                                    'Repeat',
-                                                    style: TextStyle(color: Colors.amberAccent, fontSize: 10, fontWeight: FontWeight.bold),
-                                                  ),
-                                                ),
-                                            ],
+                                          const Text(
+                                            'Customer Management',
+                                            style: TextStyle(color: Colors.white38, fontSize: 13, fontWeight: FontWeight.bold),
                                           ),
                                           const SizedBox(height: 4),
                                           Row(
                                             children: [
-                                              const Icon(Icons.phone, color: Color(0xFF00C853), size: 14),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                customer.mobileNumber.isNotEmpty ? '+91 ${customer.mobileNumber}' : 'No phone number',
-                                                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                                              const Text(
+                                                'Customers Log',
+                                                style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900),
                                               ),
-                                              if (customer.mobileNumber.isNotEmpty) ...[
-                                                const SizedBox(width: 6),
-                                                InkWell(
-                                                  onTap: () {
-                                                    Clipboard.setData(ClipboardData(text: customer.mobileNumber));
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text('Phone number copied!'),
-                                                        duration: Duration(seconds: 1),
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: const Icon(Icons.copy, color: Colors.white38, size: 13),
+                                              const SizedBox(width: 12),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF00C853).withOpacity(0.15),
+                                                  borderRadius: BorderRadius.circular(16),
+                                                  border: Border.all(color: const Color(0xFF00C853).withOpacity(0.4)),
                                                 ),
-                                              ],
-                                            ],
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              const Icon(Icons.location_on, color: Colors.white38, size: 14),
-                                              const SizedBox(width: 4),
-                                              Expanded(
                                                 child: Text(
-                                                  customer.address.isNotEmpty ? customer.address : 'Address not recorded',
-                                                  style: const TextStyle(color: Colors.white38, fontSize: 12),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  '${_customers.length} Registered',
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF00C853),
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
                                               ),
                                             ],
                                           ),
                                         ],
                                       ),
-                                    ),
+                                      ElevatedButton.icon(
+                                        onPressed: () => _fetchCustomers(isSilent: true),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF1E1E2E),
+                                          foregroundColor: const Color(0xFF00C853),
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
+                                          ),
+                                        ),
+                                        icon: const Icon(Icons.refresh, size: 18),
+                                        label: const Text('Refresh', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  ),
+                            SizedBox(height: isMobile ? 16 : 24),
 
-                                    // Purchases & Order History Button
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          '₹${customer.totalPurchases.toStringAsFixed(0)}',
-                                          style: const TextStyle(
-                                            color: Color(0xFF00C853),
-                                            fontWeight: FontWeight.w900,
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                        Text(
-                                          '${customer.totalOrders} ${customer.totalOrders == 1 ? 'order' : 'orders'}',
-                                          style: const TextStyle(color: Colors.white54, fontSize: 11),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        ElevatedButton.icon(
-                                          onPressed: () => _showOrderHistoryDialog(customer),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF1E1E2E),
-                                            foregroundColor: const Color(0xFF00C853),
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(8),
-                                              side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
-                                            ),
-                                          ),
-                                          icon: const Icon(Icons.receipt_long, size: 14),
-                                          label: const Text(
-                                            'Order History',
-                                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      ],
+                            // Analytics Summary Cards
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final isWide = constraints.maxWidth > 800;
+                                return GridView.count(
+                                  crossAxisCount: isWide ? 4 : 2,
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  crossAxisSpacing: isMobile ? 10 : 14,
+                                  mainAxisSpacing: isMobile ? 10 : 14,
+                                  childAspectRatio: isWide ? 2.2 : (isMobile ? 1.5 : 1.6),
+                                  children: [
+                                    _buildSummaryCard('Total Customers', '${_customers.length}', Icons.people_alt, const Color(0xFF00C853)),
+                                    _buildSummaryCard('Total Purchases', '₹${totalRevenue.toStringAsFixed(0)}', Icons.payments, Colors.lightBlueAccent),
+                                    _buildSummaryCard('Repeat Customers', '$repeatCount', Icons.repeat, Colors.amberAccent),
+                                    _buildSummaryCard('Avg. Order Value', '₹${avgSpend.toStringAsFixed(0)}', Icons.analytics_outlined, Colors.purpleAccent),
+                                  ],
+                                );
+                              },
+                            ),
+                            SizedBox(height: isMobile ? 16 : 24),
+
+                            // Search Bar
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF16161E),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white12),
+                              ),
+                              child: TextField(
+                                controller: _searchController,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: const InputDecoration(
+                                  icon: Icon(Icons.search, color: Color(0xFF00C853)),
+                                  hintText: 'Search customer name, phone, or address...',
+                                  hintStyle: TextStyle(color: Colors.white38, fontSize: 13),
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: isMobile ? 14 : 20),
+
+                            // Customers List
+                            if (_filteredCustomers.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(40),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF16161E),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.white10),
+                                ),
+                                child: const Column(
+                                  children: [
+                                    Icon(Icons.person_search, color: Colors.white24, size: 48),
+                                    SizedBox(height: 12),
+                                    Text(
+                                      'No customers found matching your search.',
+                                      style: TextStyle(color: Colors.white54, fontSize: 14),
                                     ),
                                   ],
                                 ),
-                              );
-                            },
-                          ),
-                      ],
-                    ),
+                              )
+                            else
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _filteredCustomers.length,
+                                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  final customer = _filteredCustomers[index];
+
+                                  return Container(
+                                    padding: EdgeInsets.all(isMobile ? 14 : 18),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF16161E),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: Colors.white12),
+                                    ),
+                                    child: isMobile
+                                        ? Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  CircleAvatar(
+                                                    radius: 20,
+                                                    backgroundColor: const Color(0xFF00C853).withOpacity(0.15),
+                                                    child: Text(
+                                                      customer.customerName.isNotEmpty
+                                                          ? customer.customerName[0].toUpperCase()
+                                                          : 'C',
+                                                      style: const TextStyle(
+                                                        color: Color(0xFF00C853),
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 16,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Row(
+                                                          children: [
+                                                            Expanded(
+                                                              child: Text(
+                                                                customer.customerName,
+                                                                style: const TextStyle(
+                                                                  color: Colors.white,
+                                                                  fontWeight: FontWeight.bold,
+                                                                  fontSize: 15,
+                                                                ),
+                                                                maxLines: 1,
+                                                                overflow: TextOverflow.ellipsis,
+                                                              ),
+                                                            ),
+                                                            if (customer.totalOrders > 1)
+                                                              Container(
+                                                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                                                decoration: BoxDecoration(
+                                                                  color: Colors.amberAccent.withOpacity(0.15),
+                                                                  borderRadius: BorderRadius.circular(4),
+                                                                ),
+                                                                child: const Text(
+                                                                  'Repeat',
+                                                                  style: TextStyle(color: Colors.amberAccent, fontSize: 9, fontWeight: FontWeight.bold),
+                                                                ),
+                                                              ),
+                                                          ],
+                                                        ),
+                                                        const SizedBox(height: 2),
+                                                        Row(
+                                                          children: [
+                                                            const Icon(Icons.phone, color: Color(0xFF00C853), size: 12),
+                                                            const SizedBox(width: 4),
+                                                            Text(
+                                                              customer.mobileNumber.isNotEmpty ? '+91 ${customer.mobileNumber}' : 'No phone',
+                                                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              if (customer.address.isNotEmpty) ...[
+                                                const SizedBox(height: 8),
+                                                Row(
+                                                  children: [
+                                                    const Icon(Icons.location_on, color: Colors.white38, size: 13),
+                                                    const SizedBox(width: 4),
+                                                    Expanded(
+                                                      child: Text(
+                                                        customer.address,
+                                                        style: const TextStyle(color: Colors.white38, fontSize: 11),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                              const SizedBox(height: 10),
+                                              const Divider(color: Colors.white10, height: 1),
+                                              const SizedBox(height: 10),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        '₹${customer.totalPurchases.toStringAsFixed(0)}',
+                                                        style: const TextStyle(
+                                                          color: Color(0xFF00C853),
+                                                          fontWeight: FontWeight.w900,
+                                                          fontSize: 16,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 6),
+                                                      Text(
+                                                        '(${customer.totalOrders} ${customer.totalOrders == 1 ? 'order' : 'orders'})',
+                                                        style: const TextStyle(color: Colors.white54, fontSize: 11),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  ElevatedButton.icon(
+                                                    onPressed: () => _showOrderHistoryDialog(customer),
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: const Color(0xFF1E1E2E),
+                                                      foregroundColor: const Color(0xFF00C853),
+                                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(8),
+                                                        side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
+                                                      ),
+                                                    ),
+                                                    icon: const Icon(Icons.receipt_long, size: 13),
+                                                    label: const Text(
+                                                      'Order History',
+                                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          )
+                                        : Row(
+                                            children: [
+                                              // Avatar
+                                              CircleAvatar(
+                                                radius: 24,
+                                                backgroundColor: const Color(0xFF00C853).withOpacity(0.15),
+                                                child: Text(
+                                                  customer.customerName.isNotEmpty
+                                                      ? customer.customerName[0].toUpperCase()
+                                                      : 'C',
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF00C853),
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 16),
+
+                                              // Customer Details
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        Text(
+                                                          customer.customerName,
+                                                          style: const TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight: FontWeight.bold,
+                                                            fontSize: 16,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 8),
+                                                        if (customer.totalOrders > 1)
+                                                          Container(
+                                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.amberAccent.withOpacity(0.15),
+                                                              borderRadius: BorderRadius.circular(4),
+                                                            ),
+                                                            child: const Text(
+                                                              'Repeat',
+                                                              style: TextStyle(color: Colors.amberAccent, fontSize: 10, fontWeight: FontWeight.bold),
+                                                            ),
+                                                          ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Row(
+                                                      children: [
+                                                        const Icon(Icons.phone, color: Color(0xFF00C853), size: 14),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          customer.mobileNumber.isNotEmpty ? '+91 ${customer.mobileNumber}' : 'No phone number',
+                                                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                                                        ),
+                                                        if (customer.mobileNumber.isNotEmpty) ...[
+                                                          const SizedBox(width: 6),
+                                                          InkWell(
+                                                            onTap: () {
+                                                              Clipboard.setData(ClipboardData(text: customer.mobileNumber));
+                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                                const SnackBar(
+                                                                  content: Text('Phone number copied!'),
+                                                                  duration: Duration(seconds: 1),
+                                                                ),
+                                                              );
+                                                            },
+                                                            child: const Icon(Icons.copy, color: Colors.white38, size: 13),
+                                                          ),
+                                                        ],
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Row(
+                                                      children: [
+                                                        const Icon(Icons.location_on, color: Colors.white38, size: 14),
+                                                        const SizedBox(width: 4),
+                                                        Expanded(
+                                                          child: Text(
+                                                            customer.address.isNotEmpty ? customer.address : 'Address not recorded',
+                                                            style: const TextStyle(color: Colors.white38, fontSize: 12),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+
+                                              // Purchases & Order History Button
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.end,
+                                                children: [
+                                                  Text(
+                                                    '₹${customer.totalPurchases.toStringAsFixed(0)}',
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF00C853),
+                                                      fontWeight: FontWeight.w900,
+                                                      fontSize: 18,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '${customer.totalOrders} ${customer.totalOrders == 1 ? 'order' : 'orders'}',
+                                                    style: const TextStyle(color: Colors.white54, fontSize: 11),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  ElevatedButton.icon(
+                                                    onPressed: () => _showOrderHistoryDialog(customer),
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: const Color(0xFF1E1E2E),
+                                                      foregroundColor: const Color(0xFF00C853),
+                                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(8),
+                                                        side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
+                                                      ),
+                                                    ),
+                                                    icon: const Icon(Icons.receipt_long, size: 14),
+                                                    label: const Text(
+                                                      'Order History',
+                                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                  );
+                                },
+                              ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
     );

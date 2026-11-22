@@ -373,50 +373,86 @@ class _OrdersScreenState extends State<OrdersScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 700;
+
     return Padding(
-      padding: const EdgeInsets.all(32.0),
+      padding: EdgeInsets.all(isMobile ? 14.0 : 32.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'CURRY MAMA FULFILLMENT',
-                    style: TextStyle(color: Colors.white24, fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Orders Log',
-                    style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900),
-                  ),
-                ],
-              ),
-              ElevatedButton.icon(
-                onPressed: _fetchOrders,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E1E2E),
-                  foregroundColor: const Color(0xFF00C853),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
-                  ),
+          // Header Row (Responsive)
+          isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'CURRY MAMA FULFILLMENT',
+                      style: TextStyle(color: Colors.white24, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Orders Log',
+                      style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _fetchOrders,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E1E2E),
+                          foregroundColor: const Color(0xFF00C853),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
+                          ),
+                        ),
+                        icon: const Icon(Icons.refresh, size: 18),
+                        label: const Text('Refresh Orders', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'CURRY MAMA FULFILLMENT',
+                          style: TextStyle(color: Colors.white24, fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Orders Log',
+                          style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900),
+                        ),
+                      ],
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: _fetchOrders,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E1E2E),
+                        foregroundColor: const Color(0xFF00C853),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
+                        ),
+                      ),
+                      icon: const Icon(Icons.refresh, size: 20),
+                      label: const Text('Refresh Orders', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
-                icon: const Icon(Icons.refresh, size: 20),
-                label: const Text('Refresh Orders', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+          SizedBox(height: isMobile ? 16 : 24),
 
           // Day-Wise Filter Bar & Summary
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isMobile ? 12 : 16),
             decoration: BoxDecoration(
               color: const Color(0xFF16161E),
               borderRadius: BorderRadius.circular(16),
@@ -428,22 +464,21 @@ class _OrdersScreenState extends State<OrdersScreen> with SingleTickerProviderSt
               crossAxisAlignment: WrapCrossAlignment.center,
               alignment: WrapAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    const Icon(Icons.calendar_month, color: Color(0xFF00C853), size: 20),
-                    const SizedBox(width: 8),
+                    const Icon(Icons.calendar_month, color: Color(0xFF00C853), size: 18),
+                    const SizedBox(width: 4),
                     const Text(
                       'Day Filter:',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 6),
                     _buildDateChip('All Days'),
-                    const SizedBox(width: 6),
                     _buildDateChip('Today'),
-                    const SizedBox(width: 6),
                     _buildDateChip('Yesterday'),
-                    const SizedBox(width: 6),
                     ChoiceChip(
                       label: Text(
                         _selectedDateFilter == 'Custom Date' && _customSelectedDate != null
@@ -466,34 +501,36 @@ class _OrdersScreenState extends State<OrdersScreen> with SingleTickerProviderSt
                     ),
                   ],
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E1E2E),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('Day Total Orders: ', style: TextStyle(color: Colors.white54, fontSize: 13)),
-                          Text('${_dateFilteredOrders.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                          const Text('Day Total Orders: ', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                          Text('${_dateFilteredOrders.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFF00C853).withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: const Color(0xFF00C853).withOpacity(0.4)),
                       ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('Day Revenue: ', style: TextStyle(color: Color(0xFF00C853), fontSize: 13, fontWeight: FontWeight.bold)),
-                          Text('₹${_dateFilteredRevenue.toStringAsFixed(0)}', style: const TextStyle(color: Color(0xFF00C853), fontWeight: FontWeight.w900, fontSize: 15)),
+                          const Text('Day Revenue: ', style: TextStyle(color: Color(0xFF00C853), fontSize: 12, fontWeight: FontWeight.bold)),
+                          Text('₹${_dateFilteredRevenue.toStringAsFixed(0)}', style: const TextStyle(color: Color(0xFF00C853), fontWeight: FontWeight.w900, fontSize: 14)),
                         ],
                       ),
                     ),

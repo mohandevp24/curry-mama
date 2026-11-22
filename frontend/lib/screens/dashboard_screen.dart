@@ -127,6 +127,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             filteredList = _allOrders.where((o) => o.status.toLowerCase() == 'completed' || o.status.toLowerCase() == 'delivered').toList();
           }
 
+          final double screenWidth = MediaQuery.of(context).size.width;
+          final bool isMobile = screenWidth < 700;
+
           return Dialog(
             backgroundColor: const Color(0xFF16161E),
             shape: RoundedRectangleBorder(
@@ -134,9 +137,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               side: const BorderSide(color: Color(0xFF00C853), width: 1.5),
             ),
             child: Container(
-              width: 720,
+              width: isMobile ? screenWidth * 0.95 : 720,
               constraints: const BoxConstraints(maxHeight: 700),
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(isMobile ? 16 : 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -493,6 +496,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 700;
     final bool isDesktop = screenWidth >= 1100;
 
     return RefreshIndicator(
@@ -500,145 +504,273 @@ class _DashboardScreenState extends State<DashboardScreen> {
       color: const Color(0xFF00C853),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(32.0),
+        padding: EdgeInsets.all(isMobile ? 16.0 : 32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Welcome to Curry Mama Dashboard',
-                      style: TextStyle(
-                        color: Colors.white24,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Analytics & Metrics',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    // Timeframe Selector
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF16161E),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF00C853).withOpacity(0.3)),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedTimeframe,
-                          dropdownColor: const Color(0xFF16161E),
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                          icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF00C853)),
-                          items: const [
-                            DropdownMenuItem(value: 'All Time', child: Text('All Time')),
-                            DropdownMenuItem(value: 'Today', child: Text('Today')),
-                            DropdownMenuItem(value: 'Yesterday', child: Text('Yesterday')),
-                            DropdownMenuItem(value: 'Day 1', child: Text('Day 1 (2 Days Ago)')),
-                          ],
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() {
-                                _selectedTimeframe = val;
-                              });
-                            }
-                          },
+            // Welcome Header (Responsive)
+            isMobile
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Welcome to Curry Mama Dashboard',
+                        style: TextStyle(
+                          color: Colors.white24,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Notifications Icon with live pending orders badge
-                    Builder(
-                      builder: (context) {
-                        final pendingCount = _allOrders.where((o) => o.status.toLowerCase() == 'pending').length;
-                        return InkWell(
-                          onTap: _showNotificationsDialog,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Analytics & Metrics',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          // Timeframe Selector
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E1E2E),
+                              color: const Color(0xFF16161E),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: pendingCount > 0 
-                                    ? Colors.orangeAccent.withOpacity(0.7) 
-                                    : const Color(0xFF00C853).withOpacity(0.3),
-                                width: pendingCount > 0 ? 1.5 : 1,
+                              border: Border.all(color: const Color(0xFF00C853).withOpacity(0.3)),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedTimeframe,
+                                dropdownColor: const Color(0xFF16161E),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF00C853)),
+                                items: const [
+                                  DropdownMenuItem(value: 'All Time', child: Text('All Time')),
+                                  DropdownMenuItem(value: 'Today', child: Text('Today')),
+                                  DropdownMenuItem(value: 'Yesterday', child: Text('Yesterday')),
+                                  DropdownMenuItem(value: 'Day 1', child: Text('Day 1 (2 Days Ago)')),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() {
+                                      _selectedTimeframe = val;
+                                    });
+                                  }
+                                },
                               ),
                             ),
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Icon(
-                                  pendingCount > 0 ? Icons.notifications_active : Icons.notifications_outlined,
-                                  color: pendingCount > 0 ? Colors.orangeAccent : const Color(0xFF00C853),
-                                  size: 22,
-                                ),
-                                if (pendingCount > 0)
-                                  Positioned(
-                                    right: -6,
-                                    top: -6,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.redAccent,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                                      child: Center(
-                                        child: Text(
-                                          '$pendingCount',
-                                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
+                          ),
+                          // Notifications Icon
+                          Builder(
+                            builder: (context) {
+                              final pendingCount = _allOrders.where((o) => o.status.toLowerCase() == 'pending').length;
+                              return InkWell(
+                                onTap: _showNotificationsDialog,
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1E1E2E),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: pendingCount > 0 
+                                          ? Colors.orangeAccent.withOpacity(0.7) 
+                                          : const Color(0xFF00C853).withOpacity(0.3),
+                                      width: pendingCount > 0 ? 1.5 : 1,
                                     ),
                                   ),
-                              ],
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Icon(
+                                        pendingCount > 0 ? Icons.notifications_active : Icons.notifications_outlined,
+                                        color: pendingCount > 0 ? Colors.orangeAccent : const Color(0xFF00C853),
+                                        size: 20,
+                                      ),
+                                      if (pendingCount > 0)
+                                        Positioned(
+                                          right: -6,
+                                          top: -6,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.redAccent,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                            child: Center(
+                                              child: Text(
+                                                '$pendingCount',
+                                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          // Refresh Button
+                          ElevatedButton.icon(
+                            onPressed: () => _fetchData(isSilent: true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1E1E2E),
+                              foregroundColor: const Color(0xFF00C853),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
+                              ),
+                            ),
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('Refresh', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Welcome to Curry Mama Dashboard',
+                            style: TextStyle(
+                              color: Colors.white24,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      onPressed: () => _fetchData(isSilent: true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E1E2E),
-                        foregroundColor: const Color(0xFF00C853),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
-                        ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Analytics & Metrics',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
                       ),
-                      icon: const Icon(Icons.refresh, size: 20),
-                      label: const Text('Refresh Data', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
+                      Row(
+                        children: [
+                          // Timeframe Selector
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF16161E),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF00C853).withOpacity(0.3)),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedTimeframe,
+                                dropdownColor: const Color(0xFF16161E),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF00C853)),
+                                items: const [
+                                  DropdownMenuItem(value: 'All Time', child: Text('All Time')),
+                                  DropdownMenuItem(value: 'Today', child: Text('Today')),
+                                  DropdownMenuItem(value: 'Yesterday', child: Text('Yesterday')),
+                                  DropdownMenuItem(value: 'Day 1', child: Text('Day 1 (2 Days Ago)')),
+                                ],
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() {
+                                      _selectedTimeframe = val;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Notifications Icon with live pending orders badge
+                          Builder(
+                            builder: (context) {
+                              final pendingCount = _allOrders.where((o) => o.status.toLowerCase() == 'pending').length;
+                              return InkWell(
+                                onTap: _showNotificationsDialog,
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1E1E2E),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: pendingCount > 0 
+                                          ? Colors.orangeAccent.withOpacity(0.7) 
+                                          : const Color(0xFF00C853).withOpacity(0.3),
+                                      width: pendingCount > 0 ? 1.5 : 1,
+                                    ),
+                                  ),
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Icon(
+                                        pendingCount > 0 ? Icons.notifications_active : Icons.notifications_outlined,
+                                        color: pendingCount > 0 ? Colors.orangeAccent : const Color(0xFF00C853),
+                                        size: 22,
+                                      ),
+                                      if (pendingCount > 0)
+                                        Positioned(
+                                          right: -6,
+                                          top: -6,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.redAccent,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                            child: Center(
+                                              child: Text(
+                                                '$pendingCount',
+                                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            onPressed: () => _fetchData(isSilent: true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1E1E2E),
+                              foregroundColor: const Color(0xFF00C853),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: const Color(0xFF00C853).withOpacity(0.3)),
+                              ),
+                            ),
+                            icon: const Icon(Icons.refresh, size: 20),
+                            label: const Text('Refresh Data', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+            SizedBox(height: isMobile ? 18 : 32),
 
             // KPI Metrics Grid
-            _buildMetricsGrid(isDesktop),
-            const SizedBox(height: 32),
+            _buildMetricsGrid(isDesktop, isMobile),
+            SizedBox(height: isMobile ? 18 : 32),
 
             // Sales Chart & Recent Orders
             if (isDesktop)
@@ -661,19 +793,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildMetricsGrid(bool isDesktop) {
+  Widget _buildMetricsGrid(bool isDesktop, bool isMobile) {
     int crossAxisCount = 4;
     if (!isDesktop) {
-      crossAxisCount = MediaQuery.of(context).size.width < 600 ? 1 : 2;
+      crossAxisCount = isMobile ? 1 : 2;
     }
 
     return GridView.count(
       crossAxisCount: crossAxisCount,
-      crossAxisSpacing: 24,
-      mainAxisSpacing: 24,
+      crossAxisSpacing: isMobile ? 14 : 24,
+      mainAxisSpacing: isMobile ? 14 : 24,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.6,
+      childAspectRatio: isMobile ? 2.1 : 1.6,
       children: [
         _buildMetricCard(
           'Total Revenue',

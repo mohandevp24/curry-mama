@@ -141,8 +141,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSliverAppBar(bool isMobile, LanguageProvider lang) {
     return SliverAppBar(
-      expandedHeight: isMobile ? 220 : 280,
-      toolbarHeight: isMobile ? 68 : 76,
+      expandedHeight: isMobile ? 180 : 260,
+      toolbarHeight: isMobile ? 60 : 72,
       pinned: true,
       backgroundColor: const Color(0xFF0A0A0A),
       elevation: 6,
@@ -150,23 +150,16 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // Static Prominent Brand Logo (High Resolution & Clear)
           Container(
-            width: isMobile ? 56 : 68,
-            height: isMobile ? 56 : 68,
+            width: isMobile ? 36 : 56,
+            height: isMobile ? 36 : 56,
             padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               color: const Color(0xFF1E1E28),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF00E676), width: 2.2),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF00E676).withOpacity(0.5),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                ),
-              ],
+              borderRadius: BorderRadius.circular(isMobile ? 10 : 14),
+              border: Border.all(color: const Color(0xFF00E676), width: 1.5),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
               child: Image.asset(
                 'assets/images/logo_hd.png',
                 fit: BoxFit.cover,
@@ -180,30 +173,36 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           // Static Prominent Brand Title & Subtitle (Never Hides on Scroll)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Curry Mama',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: isMobile ? 22 : 26,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Curry Mama',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isMobile ? 16 : 24,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.1,
+                  ),
                 ),
-              ),
-              Text(
-                lang.t('Fresh Raw Meat Delivery', 'பிரஷ் ஆட்டுக்கறி, கோழி & மீன்'),
-                style: TextStyle(
-                  color: const Color(0xFF00E676),
-                  fontSize: isMobile ? 11 : 13,
-                  fontWeight: FontWeight.bold,
+                Text(
+                  lang.t('Fresh Raw Meat Delivery', 'பிரஷ் ஆட்டுக்கறி, கோழி & மீன்'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: const Color(0xFF00E676),
+                    fontSize: isMobile ? 10 : 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -214,16 +213,17 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const TrackOrderScreen()));
           },
           icon: const Icon(Icons.location_on, color: Color(0xFF00E676)),
+          iconSize: isMobile ? 20 : 24,
           tooltip: lang.t('Track Order', 'ஆர்டரைத் தேடு'),
         ),
         // Language Icon Button
         Padding(
-          padding: const EdgeInsets.only(right: 12.0),
+          padding: EdgeInsets.only(right: isMobile ? 8.0 : 12.0),
           child: InkWell(
             onTap: () => lang.toggleLanguage(),
             borderRadius: BorderRadius.circular(20),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 10, vertical: isMobile ? 4 : 6),
               decoration: BoxDecoration(
                 color: const Color(0xFF1E1E28),
                 borderRadius: BorderRadius.circular(20),
@@ -232,11 +232,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.language, color: Color(0xFF00E676), size: 18),
-                  const SizedBox(width: 6),
+                  Icon(Icons.language, color: const Color(0xFF00E676), size: isMobile ? 15 : 18),
+                  const SizedBox(width: 4),
                   Text(
                     lang.isTamil ? 'தமிழ்' : 'ENG',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: isMobile ? 11 : 12),
                   ),
                 ],
               ),
@@ -251,13 +251,27 @@ class _HomeScreenState extends State<HomeScreen> {
             if (_bannerImages.isNotEmpty)
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 800),
-                child: Image.network(
-                  _bannerImages[_currentBannerIndex % _bannerImages.length],
+                child: Builder(
                   key: ValueKey<int>(_currentBannerIndex),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (_, __, ___) => Container(color: Colors.grey[900]),
+                  builder: (context) {
+                    final bannerUrl = _bannerImages[_currentBannerIndex % _bannerImages.length];
+                    if (bannerUrl.startsWith('data:image')) {
+                      return Image.memory(
+                        base64Decode(bannerUrl.substring(bannerUrl.indexOf(',') + 1)),
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        errorBuilder: (_, __, ___) => Container(color: Colors.grey[900]),
+                      );
+                    }
+                    return Image.network(
+                      bannerUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (_, __, ___) => Container(color: Colors.grey[900]),
+                    );
+                  },
                 ),
               )
             else
@@ -339,8 +353,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCategoryChips(bool isMobile, LanguageProvider lang) {
     return Container(
-      height: 60,
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16.0 : MediaQuery.of(context).size.width * 0.15),
+      height: isMobile ? 50 : 60,
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12.0 : MediaQuery.of(context).size.width * 0.15),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: _categories.length,
@@ -361,20 +375,20 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           return Padding(
-            padding: const EdgeInsets.only(right: 12.0, top: 12, bottom: 12),
+            padding: EdgeInsets.only(right: isMobile ? 8.0 : 12.0, top: isMobile ? 6 : 10, bottom: isMobile ? 6 : 10),
             child: InkWell(
               onTap: () {
                 setState(() {
                   _selectedCategory = cat;
                 });
               },
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 20),
                 decoration: BoxDecoration(
                   color: isSelected ? const Color(0xFF00E676) : const Color(0xFF1A1A1A),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: isSelected ? const Color(0xFF00E676) : Colors.white12,
                   ),
@@ -385,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     color: isSelected ? Colors.black : Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                    fontSize: isMobile ? 13 : 15,
                   ),
                 ),
               ),
@@ -401,16 +415,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final options = cart.getWeightOptions(product);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: EdgeInsets.only(bottom: isMobile ? 14 : 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0A0A0A), // Very dark grey, almost black
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF00E676).withOpacity(0.1), width: 1.5),
+        color: const Color(0xFF0A0A0A),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF00E676).withOpacity(0.12), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF00E676).withOpacity(0.02),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -418,16 +432,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildModernProductImage(product, 200),
+                _buildModernProductImage(product, isMobile: true),
                 Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(14.0),
                   child: _buildModernProductDetails(product, cart, lang, qty, options, isMobile),
                 ),
               ],
             )
           : Row(
               children: [
-                _buildModernProductImage(product, 200, width: 240),
+                SizedBox(
+                  width: 260,
+                  child: _buildModernProductImage(product, isMobile: false),
+                ),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
@@ -439,66 +456,59 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildModernProductImage(Product product, double height, {double? width}) {
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(22),
-            topRight: Radius.circular(22),
-            bottomLeft: Radius.circular(0),
-            bottomRight: Radius.circular(0),
+  Widget _buildModernProductImage(Product product, {double? height, double? width, bool isMobile = true}) {
+    return AspectRatio(
+      aspectRatio: 4 / 3, // Locked strictly to 4:3 ratio
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: isMobile
+                ? const BorderRadius.vertical(top: Radius.circular(18))
+                : const BorderRadius.horizontal(left: Radius.circular(18)),
+            child: product.imageUrl.startsWith('data:image')
+                ? Image.memory(
+                    base64Decode(product.imageUrl.substring(product.imageUrl.indexOf(',') + 1)),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: const Color(0xFF1A1A1A),
+                      child: const Icon(Icons.restaurant, color: Colors.white24, size: 40),
+                    ),
+                  )
+                : Image.network(
+                    product.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: const Color(0xFF1A1A1A),
+                      child: const Icon(Icons.restaurant, color: Colors.white24, size: 40),
+                    ),
+                  ),
           ),
-          child: product.imageUrl.startsWith('data:image')
-              ? Image.memory(
-                  base64Decode(product.imageUrl.substring(product.imageUrl.indexOf(',') + 1)),
-                  height: height,
-                  width: width ?? double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: height,
-                    width: width ?? double.infinity,
-                    color: const Color(0xFF1A1A1A),
-                    child: const Icon(Icons.restaurant, color: Colors.white24, size: 48),
+          // Glassmorphic tag
+          Positioned(
+            top: 10,
+            left: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.65),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white.withOpacity(0.2)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.star, color: Color(0xFF00E676), size: 12),
+                  SizedBox(width: 4),
+                  Text(
+                    'PREMIUM',
+                    style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.1),
                   ),
-                )
-              : Image.network(
-                  product.imageUrl,
-                  height: height,
-                  width: width ?? double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: height,
-                    width: width ?? double.infinity,
-                    color: const Color(0xFF1A1A1A),
-                    child: const Icon(Icons.restaurant, color: Colors.white24, size: 48),
-                  ),
-                ),
-        ),
-        // Glassmorphic tag
-        Positioned(
-          top: 12,
-          left: 12,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.star, color: Color(0xFF00E676), size: 14),
-                const SizedBox(width: 4),
-                Text(
-                  'PREMIUM',
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -508,50 +518,52 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: Text(
                 product.name,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: isMobile ? 22 : 28,
+                  fontSize: isMobile ? 17 : 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
+            const SizedBox(width: 8),
             Text(
-              '₹${product.price}',
+              '₹${product.price.toStringAsFixed(0)}',
               style: TextStyle(
                 color: const Color(0xFF00E676),
-                fontSize: isMobile ? 20 : 24,
+                fontSize: isMobile ? 18 : 24,
                 fontWeight: FontWeight.w900,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
           '${product.category} • ${product.weight}',
-          style: const TextStyle(color: Colors.white54, fontSize: 14),
+          style: TextStyle(color: Colors.white54, fontSize: isMobile ? 12 : 14),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: isMobile ? 14 : 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // Dropdown
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12),
               decoration: BoxDecoration(
                 color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.white10),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<int>(
                   value: qty > 0 ? qty : options.first['qty'],
                   dropdownColor: const Color(0xFF1A1A1A),
-                  icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF00E676)),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF00E676), size: 18),
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: isMobile ? 12 : 14),
                   onChanged: (int? newQty) {
                     if (newQty != null) cart.updateQuantity(product, newQty);
                   },
@@ -573,24 +585,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? Container(
                     decoration: BoxDecoration(
                       color: const Color(0xFF1A1A1A),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: const Color(0xFF00E676)),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           onPressed: () => cart.updateQuantity(product, qty - 1),
                           icon: const Icon(Icons.remove, color: Colors.white),
-                          iconSize: 20,
+                          iconSize: isMobile ? 16 : 20,
+                          padding: EdgeInsets.all(isMobile ? 6 : 8),
+                          constraints: const BoxConstraints(),
                         ),
-                        Text(
-                          '$qty',
-                          style: const TextStyle(color: Color(0xFF00E676), fontWeight: FontWeight.bold, fontSize: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Text(
+                            '$qty',
+                            style: TextStyle(color: const Color(0xFF00E676), fontWeight: FontWeight.bold, fontSize: isMobile ? 14 : 16),
+                          ),
                         ),
                         IconButton(
                           onPressed: () => cart.updateQuantity(product, qty + 1),
                           icon: const Icon(Icons.add, color: Colors.white),
-                          iconSize: 20,
+                          iconSize: isMobile ? 16 : 20,
+                          padding: EdgeInsets.all(isMobile ? 6 : 8),
+                          constraints: const BoxConstraints(),
                         ),
                       ],
                     ),
@@ -600,12 +620,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF00E676),
                       foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 32, vertical: isMobile ? 10 : 14),
                     ),
                     child: Text(
                       lang.t('ADD', 'சேர்'),
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: isMobile ? 13 : 16),
                     ),
                   ),
           ],
